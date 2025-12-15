@@ -1,12 +1,32 @@
-[package]
-name = "obfuse-rs"
+[workspace]
+members = ["obfuse", "obfuse-core", "obfuse-macros"]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.91"
+rust-version = "1.85"
 license = "MIT"
-description = "Compile-time string obfuscation with runtime decryption and secure memory wiping"
 repository = "https://github.com/user/obfuse-rs"
 keywords = ["obfuscation", "string", "compile-time", "security", "anti-reverse-engineering"]
 categories = ["development-tools::procedural-macro-helpers"]
 
-[dependencies]
+[workspace.dependencies]
+# Crypto
+aes-gcm = "0.10"
+chacha20poly1305 = "0.10"
+zeroize = { version = "1.8", features = ["derive"] }
+
+# RNG
+getrandom = "0.2"
+rand = "0.8"
+rand_chacha = "0.3"
+
+# Proc-macro
+syn = { version = "2.0", features = ["full", "parsing"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+# Internal
+obfuse-core = { path = "obfuse-core" }
+obfuse-macros = { path = "obfuse-macros" }

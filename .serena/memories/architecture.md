@@ -127,25 +127,25 @@ For real secrets: Use runtime secrets management (env vars, Vault, etc.)
 ## Implementation Checklist
 
 ### Core
-- [ ] Create workspace with 3 crates
-- [ ] Implement ObfuseStr with OnceLock
-- [ ] Implement ObfuseError
-- [ ] Add zeroize on Drop
-- [ ] Add Debug trait (redacted)
+- [x] Create workspace with 3 crates
+- [x] Implement ObfuseStr with OnceLock
+- [x] Implement ObfuseError
+- [x] Add zeroize on Drop
+- [x] Add Debug trait (redacted)
 
 ### Macro
-- [ ] Implement obfuse! proc-macro (random mode)
-- [ ] Add seed parameter support (deterministic mode)
-- [ ] Compile-time encryption logic
+- [x] Implement obfuse! proc-macro (random mode)
+- [x] Add seed parameter support (deterministic mode)
+- [x] Compile-time encryption logic
 
 ### Algorithms
-- [ ] AES-256-GCM encryption/decryption
-- [ ] AES-128-GCM encryption/decryption
-- [ ] ChaCha20-Poly1305 encryption/decryption
-- [ ] XOR encryption/decryption
+- [x] AES-256-GCM encryption/decryption
+- [x] AES-128-GCM encryption/decryption
+- [x] ChaCha20-Poly1305 encryption/decryption
+- [x] XOR encryption/decryption
 
 ### Testing
-- [ ] Unit tests for each algorithm
-- [ ] Test random mode (non-deterministic)
-- [ ] Test seed mode (deterministic/reproducible)
-- [ ] Integration tests
+- [x] Unit tests for each algorithm
+- [x] Test random mode (non-deterministic)
+- [x] Test seed mode (deterministic/reproducible)
+- [x] Integration tests (21 tests passing)

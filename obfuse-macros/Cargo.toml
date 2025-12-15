@@ -1,0 +1,28 @@
+[package]
+name = "obfuse-macros"
+description = "Procedural macros for obfuse string obfuscation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[features]
+default = ["aes-256-gcm"]
+aes-256-gcm = []
+aes-128-gcm = []
+chacha20-poly1305 = []
+xor = []
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true
+getrandom.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+aes-gcm.workspace = true
+chacha20poly1305.workspace = true

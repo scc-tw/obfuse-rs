@@ -1,0 +1,21 @@
+[package]
+name = "obfuse"
+description = "Compile-time string obfuscation with runtime decryption and secure memory wiping"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["aes-256-gcm"]
+aes-256-gcm = ["obfuse-core/aes-256-gcm", "obfuse-macros/aes-256-gcm"]
+aes-128-gcm = ["obfuse-core/aes-128-gcm", "obfuse-macros/aes-128-gcm"]
+chacha20-poly1305 = ["obfuse-core/chacha20-poly1305", "obfuse-macros/chacha20-poly1305"]
+xor = ["obfuse-core/xor", "obfuse-macros/xor"]
+
+[dependencies]
+obfuse-core.workspace = true
+obfuse-macros.workspace = true
