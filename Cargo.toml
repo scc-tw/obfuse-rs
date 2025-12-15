@@ -3,7 +3,7 @@ members = ["obfuse", "obfuse-core", "obfuse-macros"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.6"
+version = "0.1.7"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -29,5 +29,5 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 # Internal (version required for crates.io publishing)
-obfuse-core = { version = "0.1.6", path = "obfuse-core" }
-obfuse-macros = { version = "0.1.6", path = "obfuse-macros" }
+obfuse-core = { version = "0.1.7", path = "obfuse-core" }
+obfuse-macros = { version = "0.1.7", path = "obfuse-macros" }
