@@ -83,30 +83,28 @@ impl Parse for ObfuseInput {
 #[proc_macro]
 pub fn obfuse(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as ObfuseInput);
-    obfuse_impl(input)
-        .unwrap_or_else(|e| e.to_compile_error())
-        .into()
+    obfuse_impl(&input).into()
 }
 
-fn obfuse_impl(input: ObfuseInput) -> syn::Result<TokenStream2> {
+fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
     let plaintext = input.literal.value();
     let plaintext_bytes = plaintext.as_bytes();
 
     // Encrypt at compile time
-    let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(|s| s.value()));
+    let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
 
     // Convert to token streams
     let ciphertext_tokens = byte_array_tokens(&ciphertext);
     let key_tokens = fixed_byte_array_tokens::<KEY_SIZE>(&key);
     let nonce_tokens = fixed_byte_array_tokens::<NONCE_SIZE>(&nonce);
 
-    Ok(quote! {
+    quote! {
         ::obfuse::ObfuseStr::new(
             &#ciphertext_tokens,
             #key_tokens,
             #nonce_tokens,
         )
-    })
+    }
 }
 
 /// Generates a token stream for a byte slice: `[0x01, 0x02, ...]`

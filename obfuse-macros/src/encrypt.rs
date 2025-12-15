@@ -83,10 +83,9 @@ pub fn encrypt(
 
 /// Generates key and nonce, either randomly or from seed.
 fn generate_key_nonce(seed: Option<String>) -> ([u8; KEY_SIZE], [u8; NONCE_SIZE]) {
-    match seed {
-        Some(seed_str) => generate_deterministic(seed_str),
-        None => generate_random(),
-    }
+    seed.map_or_else(generate_random, |seed_str| {
+        generate_deterministic(&seed_str)
+    })
 }
 
 /// Generates random key and nonce using system entropy.
@@ -101,9 +100,9 @@ fn generate_random() -> ([u8; KEY_SIZE], [u8; NONCE_SIZE]) {
 }
 
 /// Generates deterministic key and nonce from a seed string.
-fn generate_deterministic(seed: String) -> ([u8; KEY_SIZE], [u8; NONCE_SIZE]) {
+fn generate_deterministic(seed: &str) -> ([u8; KEY_SIZE], [u8; NONCE_SIZE]) {
     // Create a 32-byte seed for ChaCha20 from the string
-    let seed_bytes = create_seed_bytes(&seed);
+    let seed_bytes = create_seed_bytes(seed);
     let mut rng = ChaCha20Rng::from_seed(seed_bytes);
 
     let mut key = [0u8; KEY_SIZE];
@@ -124,8 +123,10 @@ fn create_seed_bytes(seed: &str) -> [u8; 32] {
     for (i, &byte) in seed_bytes.iter().enumerate() {
         result[i % 32] ^= byte;
         // Mix with position to avoid collisions
-        result[(i + 7) % 32] =
-            result[(i + 7) % 32].wrapping_add(byte.wrapping_mul((i as u8).wrapping_add(1)));
+        // Truncation is intentional - we want the wrapping behavior for hash mixing
+        #[allow(clippy::cast_possible_truncation)]
+        let pos_factor = (i as u8).wrapping_add(1);
+        result[(i + 7) % 32] = result[(i + 7) % 32].wrapping_add(byte.wrapping_mul(pos_factor));
     }
 
     // Additional mixing passes for better distribution
@@ -227,8 +228,8 @@ mod tests {
 
     #[test]
     fn test_deterministic_same_seed() {
-        let (key1, nonce1) = generate_deterministic("test_seed".to_string());
-        let (key2, nonce2) = generate_deterministic("test_seed".to_string());
+        let (key1, nonce1) = generate_deterministic("test_seed");
+        let (key2, nonce2) = generate_deterministic("test_seed");
 
         assert_eq!(key1, key2);
         assert_eq!(nonce1, nonce2);
@@ -236,8 +237,8 @@ mod tests {
 
     #[test]
     fn test_deterministic_different_seeds() {
-        let (key1, _) = generate_deterministic("seed_a".to_string());
-        let (key2, _) = generate_deterministic("seed_b".to_string());
+        let (key1, _) = generate_deterministic("seed_a");
+        let (key2, _) = generate_deterministic("seed_b");
 
         assert_ne!(key1, key2);
     }
