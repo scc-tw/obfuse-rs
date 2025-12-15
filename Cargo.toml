@@ -7,7 +7,8 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
-repository = "https://github.com/user/obfuse-rs"
+authors = ["scc (Oscar Yang)"]
+repository = "https://github.com/scc-tw/obfuse-rs"
 keywords = ["obfuscation", "string", "compile-time", "security", "anti-reverse-engineering"]
 categories = ["development-tools::procedural-macro-helpers"]
 
@@ -27,6 +28,6 @@ syn = { version = "2.0", features = ["full", "parsing"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 
-# Internal
-obfuse-core = { path = "obfuse-core" }
-obfuse-macros = { path = "obfuse-macros" }
+# Internal (version required for crates.io publishing)
+obfuse-core = { version = "0.1.0", path = "obfuse-core" }
+obfuse-macros = { version = "0.1.0", path = "obfuse-macros" }
