@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__serena__list_dir",
+      "mcp__serena__activate_project",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__write_memory",
+      "mcp__serena__list_memories",
+      "mcp__serena__edit_memory",
+      "mcp__serena__read_memory",
+      "mcp__serena__find_symbol",
+      "mcp__serena__think_about_collected_information"
+    ]
+  }
+}

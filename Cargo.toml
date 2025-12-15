@@ -1,0 +1,12 @@
+[package]
+name = "obfuse-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+license = "MIT"
+description = "Compile-time string obfuscation with runtime decryption and secure memory wiping"
+repository = "https://github.com/user/obfuse-rs"
+keywords = ["obfuscation", "string", "compile-time", "security", "anti-reverse-engineering"]
+categories = ["development-tools::procedural-macro-helpers"]
+
+[dependencies]
