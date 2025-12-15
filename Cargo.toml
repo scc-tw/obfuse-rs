@@ -9,7 +9,7 @@ rust-version = "1.85"
 license = "MIT"
 authors = ["scc (Oscar Yang)"]
 repository = "https://github.com/scc-tw/obfuse-rs"
-keywords = ["obfuscation", "string", "compile-time", "security", "anti-reverse-engineering"]
+keywords = ["obfuscation", "string", "compile-time", "security", "anti-reverse"]
 categories = ["development-tools::procedural-macro-helpers"]
 
 [workspace.dependencies]
