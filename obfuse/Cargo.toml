@@ -9,6 +9,7 @@ authors.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
+readme = "../README.md"
 
 [features]
 default = ["aes-256-gcm"]
