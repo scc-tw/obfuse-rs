@@ -94,8 +94,8 @@ fn generate_random() -> ([u8; KEY_SIZE], [u8; NONCE_SIZE]) {
     let mut key = [0u8; KEY_SIZE];
     let mut nonce = [0u8; NONCE_SIZE];
 
-    getrandom::getrandom(&mut key).expect("Failed to generate random key");
-    getrandom::getrandom(&mut nonce).expect("Failed to generate random nonce");
+    getrandom::fill(&mut key).expect("Failed to generate random key");
+    getrandom::fill(&mut nonce).expect("Failed to generate random nonce");
 
     (key, nonce)
 }
