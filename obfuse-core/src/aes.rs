@@ -10,8 +10,8 @@ pub use aes128::*;
 
 #[cfg(feature = "aes-256-gcm")]
 mod aes256 {
-    use super::*;
-    use aes_gcm::{Aes256Gcm, KeyInit, Nonce, aead::Aead};
+    use super::ObfuseError;
+    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
 
     /// Key size for AES-256-GCM (32 bytes).
     pub const KEY_SIZE: usize = 32;
@@ -39,15 +39,15 @@ mod aes256 {
 
         cipher
             .decrypt(nonce, ciphertext)
-            .map(|v| v.into_boxed_slice())
+            .map(Vec::into_boxed_slice)
             .map_err(|_| ObfuseError::AuthenticationFailed)
     }
 }
 
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
 mod aes128 {
-    use super::*;
-    use aes_gcm::{Aes128Gcm, KeyInit, Nonce, aead::Aead};
+    use super::ObfuseError;
+    use aes_gcm::{aead::Aead, Aes128Gcm, KeyInit, Nonce};
 
     /// Key size for AES-128-GCM (16 bytes).
     pub const KEY_SIZE: usize = 16;
@@ -67,7 +67,7 @@ mod aes128 {
 
         cipher
             .decrypt(nonce, ciphertext)
-            .map(|v| v.into_boxed_slice())
+            .map(Vec::into_boxed_slice)
             .map_err(|_| ObfuseError::AuthenticationFailed)
     }
 }

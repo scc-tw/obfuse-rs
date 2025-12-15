@@ -1,8 +1,8 @@
-//! Error types for ObfuseStr decryption operations.
+//! Error types for `ObfuseStr` decryption operations.
 
 use std::fmt;
 
-/// Errors that can occur during ObfuseStr decryption.
+/// Errors that can occur during `ObfuseStr` decryption.
 #[derive(Debug)]
 pub enum ObfuseError {
     /// Memory allocation failed during decryption (OOM).

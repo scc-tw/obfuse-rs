@@ -70,6 +70,7 @@ impl ObfuseStr {
     ///
     /// This is called by the `obfuse!` macro and should not be used directly.
     #[doc(hidden)]
+    #[must_use]
     pub const fn new(
         encrypted: &'static [u8],
         key: [u8; KEY_SIZE],
@@ -100,6 +101,12 @@ impl ObfuseStr {
     ///
     /// This is the recommended method for critical code paths where
     /// panicking is unacceptable.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - Decryption fails (authentication error or corrupted data)
+    /// - The decrypted bytes are not valid UTF-8
     pub fn try_as_str(&self) -> Result<&str, ObfuseError> {
         let bytes = self.try_as_bytes()?;
         std::str::from_utf8(bytes).map_err(ObfuseError::from)
@@ -117,6 +124,17 @@ impl ObfuseStr {
     }
 
     /// Returns the decrypted bytes, or an error if decryption fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ObfuseError::AuthenticationFailed`] if decryption fails
+    /// (e.g., corrupted ciphertext or wrong key/nonce).
+    ///
+    /// # Panics
+    ///
+    /// This function should never panic under normal circumstances. The internal
+    /// `expect` is a safeguard that triggers only if the `OnceLock` fails to store
+    /// a value, which cannot happen in correct usage.
     pub fn try_as_bytes(&self) -> Result<&[u8], ObfuseError> {
         // Use get_or_init with internal error handling since get_or_try_init is unstable
         if let Some(cached) = self.decrypted.get() {
@@ -131,7 +149,9 @@ impl ObfuseStr {
         let _ = self.decrypted.set(plaintext);
 
         // Return the stored value (either ours or the other thread's)
-        Ok(self.decrypted.get().expect("just set").as_ref())
+        // Safety: We just called set() above, and even in a race condition,
+        // another thread would have set a value, so get() will succeed.
+        Ok(self.decrypted.get().expect("value was just set").as_ref())
     }
 
     /// Returns `true` if the string has already been decrypted.
@@ -145,6 +165,10 @@ impl ObfuseStr {
     /// Pre-decrypts the string without returning the value.
     ///
     /// Useful for warming up the cache before time-critical operations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if decryption fails.
     pub fn try_decrypt(&self) -> Result<(), ObfuseError> {
         self.try_as_bytes().map(|_| ())
     }
@@ -157,7 +181,7 @@ impl ObfuseStr {
     /// # Note
     ///
     /// After calling this, the `ObfuseStr` will re-decrypt on next access
-    /// (though the OnceLock prevents this - this method exists for the Drop impl).
+    /// (though the `OnceLock` prevents this - this method exists for the Drop impl).
     pub fn zeroize(&mut self) {
         self.key.zeroize();
         self.nonce.zeroize();
@@ -221,8 +245,6 @@ impl Drop for ObfuseStr {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_debug_redacts_value() {
         // This test requires the macro, so we just test the debug format structure
