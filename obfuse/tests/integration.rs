@@ -1,6 +1,6 @@
 //! Integration tests for the obfuse library.
 
-use obfuse::{obfuse, ObfuseError, ObfuseStr};
+use obfuse::{ObfuseError, ObfuseStr, obfuse};
 
 #[test]
 fn test_basic_decryption() {
@@ -24,10 +24,12 @@ fn test_unicode() {
 fn test_long_string() {
     let long_text = "a".repeat(10000);
     // Can't use repeat() in macro, so use a literal long string
-    let secret = obfuse!("Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
+    let secret = obfuse!(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
         Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \
         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris \
-        nisi ut aliquip ex ea commodo consequat.");
+        nisi ut aliquip ex ea commodo consequat."
+    );
 
     assert!(secret.as_str().starts_with("Lorem ipsum"));
     assert!(secret.as_str().contains("consectetur"));

@@ -1,10 +1,7 @@
 //! ChaCha20-Poly1305 decryption implementation.
 
 use crate::ObfuseError;
-use chacha20poly1305::{
-    ChaCha20Poly1305, KeyInit, Nonce,
-    aead::Aead,
-};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce, aead::Aead};
 
 /// Key size for ChaCha20-Poly1305 (32 bytes).
 pub const KEY_SIZE: usize = 32;

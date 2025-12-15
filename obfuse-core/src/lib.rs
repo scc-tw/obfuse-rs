@@ -21,7 +21,10 @@ mod error;
 mod obfuse_str;
 
 // Only compile the module that's actually selected (mutually exclusive features)
-#[cfg(any(feature = "aes-256-gcm", all(feature = "aes-128-gcm", not(feature = "aes-256-gcm"))))]
+#[cfg(any(
+    feature = "aes-256-gcm",
+    all(feature = "aes-128-gcm", not(feature = "aes-256-gcm"))
+))]
 mod aes;
 
 #[cfg(all(
@@ -32,7 +35,11 @@ mod chacha;
 
 #[cfg(all(
     feature = "xor",
-    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
 ))]
 mod xor;
 
@@ -46,10 +53,20 @@ pub use aes::{KEY_SIZE, NONCE_SIZE};
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
 pub use aes::{KEY_SIZE, NONCE_SIZE};
 
-#[cfg(all(feature = "chacha20-poly1305", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))))]
+#[cfg(all(
+    feature = "chacha20-poly1305",
+    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))
+))]
 pub use chacha::{KEY_SIZE, NONCE_SIZE};
 
-#[cfg(all(feature = "xor", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))))]
+#[cfg(all(
+    feature = "xor",
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
+))]
 pub use xor::{KEY_SIZE, NONCE_SIZE};
 
 // Compile-time check: ensure at least one algorithm is enabled

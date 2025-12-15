@@ -18,20 +18,50 @@ pub const KEY_SIZE: usize = 16;
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
 pub const NONCE_SIZE: usize = 12;
 
-#[cfg(all(feature = "chacha20-poly1305", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))))]
+#[cfg(all(
+    feature = "chacha20-poly1305",
+    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))
+))]
 pub const KEY_SIZE: usize = 32;
-#[cfg(all(feature = "chacha20-poly1305", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))))]
+#[cfg(all(
+    feature = "chacha20-poly1305",
+    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))
+))]
 pub const NONCE_SIZE: usize = 12;
 
-#[cfg(all(feature = "xor", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))))]
+#[cfg(all(
+    feature = "xor",
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
+))]
 pub const KEY_SIZE: usize = 32;
-#[cfg(all(feature = "xor", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))))]
+#[cfg(all(
+    feature = "xor",
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
+))]
 pub const NONCE_SIZE: usize = 12;
 
 // Fallback for when no feature is enabled (will cause compile error in core)
-#[cfg(not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305", feature = "xor")))]
+#[cfg(not(any(
+    feature = "aes-256-gcm",
+    feature = "aes-128-gcm",
+    feature = "chacha20-poly1305",
+    feature = "xor"
+)))]
 pub const KEY_SIZE: usize = 32;
-#[cfg(not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305", feature = "xor")))]
+#[cfg(not(any(
+    feature = "aes-256-gcm",
+    feature = "aes-128-gcm",
+    feature = "chacha20-poly1305",
+    feature = "xor"
+)))]
 pub const NONCE_SIZE: usize = 12;
 
 /// Encrypts plaintext at compile time.
@@ -94,7 +124,8 @@ fn create_seed_bytes(seed: &str) -> [u8; 32] {
     for (i, &byte) in seed_bytes.iter().enumerate() {
         result[i % 32] ^= byte;
         // Mix with position to avoid collisions
-        result[(i + 7) % 32] = result[(i + 7) % 32].wrapping_add(byte.wrapping_mul((i as u8).wrapping_add(1)));
+        result[(i + 7) % 32] =
+            result[(i + 7) % 32].wrapping_add(byte.wrapping_mul((i as u8).wrapping_add(1)));
     }
 
     // Additional mixing passes for better distribution
@@ -121,9 +152,7 @@ fn encrypt_with_algorithm(
     let cipher = Aes256Gcm::new_from_slice(key).expect("Invalid key size");
     let nonce = Nonce::from_slice(nonce);
 
-    cipher
-        .encrypt(nonce, plaintext)
-        .expect("Encryption failed")
+    cipher.encrypt(nonce, plaintext).expect("Encryption failed")
 }
 
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
@@ -137,12 +166,13 @@ fn encrypt_with_algorithm(
     let cipher = Aes128Gcm::new_from_slice(key).expect("Invalid key size");
     let nonce = Nonce::from_slice(nonce);
 
-    cipher
-        .encrypt(nonce, plaintext)
-        .expect("Encryption failed")
+    cipher.encrypt(nonce, plaintext).expect("Encryption failed")
 }
 
-#[cfg(all(feature = "chacha20-poly1305", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))))]
+#[cfg(all(
+    feature = "chacha20-poly1305",
+    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))
+))]
 fn encrypt_with_algorithm(
     plaintext: &[u8],
     key: &[u8; KEY_SIZE],
@@ -153,12 +183,17 @@ fn encrypt_with_algorithm(
     let cipher = ChaCha20Poly1305::new_from_slice(key).expect("Invalid key size");
     let nonce = Nonce::from_slice(nonce);
 
-    cipher
-        .encrypt(nonce, plaintext)
-        .expect("Encryption failed")
+    cipher.encrypt(nonce, plaintext).expect("Encryption failed")
 }
 
-#[cfg(all(feature = "xor", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))))]
+#[cfg(all(
+    feature = "xor",
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
+))]
 fn encrypt_with_algorithm(
     plaintext: &[u8],
     key: &[u8; KEY_SIZE],
@@ -172,7 +207,12 @@ fn encrypt_with_algorithm(
 }
 
 // Fallback when no feature is enabled
-#[cfg(not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305", feature = "xor")))]
+#[cfg(not(any(
+    feature = "aes-256-gcm",
+    feature = "aes-128-gcm",
+    feature = "chacha20-poly1305",
+    feature = "xor"
+)))]
 fn encrypt_with_algorithm(
     _plaintext: &[u8],
     _key: &[u8; KEY_SIZE],

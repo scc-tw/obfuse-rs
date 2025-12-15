@@ -1,6 +1,6 @@
 //! Error handling example showing fallible API.
 
-use obfuse::{obfuse, ObfuseError};
+use obfuse::{ObfuseError, obfuse};
 
 fn main() {
     let secret = obfuse!("sensitive data");

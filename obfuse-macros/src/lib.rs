@@ -6,11 +6,11 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{parse_macro_input, LitStr, Token, parse::Parse, parse::ParseStream};
+use syn::{LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input};
 
 mod encrypt;
 
-use encrypt::{encrypt, KEY_SIZE, NONCE_SIZE};
+use encrypt::{KEY_SIZE, NONCE_SIZE, encrypt};
 
 /// Input to the `obfuse!` macro.
 ///

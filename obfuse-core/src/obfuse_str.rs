@@ -15,10 +15,20 @@ use crate::aes::{KEY_SIZE, NONCE_SIZE, decrypt};
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
 use crate::aes::{KEY_SIZE, NONCE_SIZE, decrypt};
 
-#[cfg(all(feature = "chacha20-poly1305", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))))]
+#[cfg(all(
+    feature = "chacha20-poly1305",
+    not(any(feature = "aes-256-gcm", feature = "aes-128-gcm"))
+))]
 use crate::chacha::{KEY_SIZE, NONCE_SIZE, decrypt};
 
-#[cfg(all(feature = "xor", not(any(feature = "aes-256-gcm", feature = "aes-128-gcm", feature = "chacha20-poly1305"))))]
+#[cfg(all(
+    feature = "xor",
+    not(any(
+        feature = "aes-256-gcm",
+        feature = "aes-128-gcm",
+        feature = "chacha20-poly1305"
+    ))
+))]
 use crate::xor::{KEY_SIZE, NONCE_SIZE, decrypt};
 
 /// An obfuscated string that decrypts lazily on first access.
@@ -82,9 +92,8 @@ impl ObfuseStr {
     /// [`try_as_str`]: Self::try_as_str
     #[inline]
     pub fn as_str(&self) -> &str {
-        self.try_as_str().unwrap_or_else(|e| {
-            panic!("ObfuseStr decryption failed: {e}")
-        })
+        self.try_as_str()
+            .unwrap_or_else(|e| panic!("ObfuseStr decryption failed: {e}"))
     }
 
     /// Returns the decrypted string, or an error if decryption fails.
@@ -103,9 +112,8 @@ impl ObfuseStr {
     /// Panics if decryption fails.
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        self.try_as_bytes().unwrap_or_else(|e| {
-            panic!("ObfuseStr decryption failed: {e}")
-        })
+        self.try_as_bytes()
+            .unwrap_or_else(|e| panic!("ObfuseStr decryption failed: {e}"))
     }
 
     /// Returns the decrypted bytes, or an error if decryption fails.
