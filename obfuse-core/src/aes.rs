@@ -11,7 +11,7 @@ pub use aes128::*;
 #[cfg(feature = "aes-256-gcm")]
 mod aes256 {
     use super::ObfuseError;
-    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+    use aes_gcm::{Aes256Gcm, KeyInit, Nonce, aead::Aead};
 
     /// Key size for AES-256-GCM (32 bytes).
     pub const KEY_SIZE: usize = 32;
@@ -47,7 +47,7 @@ mod aes256 {
 #[cfg(all(feature = "aes-128-gcm", not(feature = "aes-256-gcm")))]
 mod aes128 {
     use super::ObfuseError;
-    use aes_gcm::{aead::Aead, Aes128Gcm, KeyInit, Nonce};
+    use aes_gcm::{Aes128Gcm, KeyInit, Nonce, aead::Aead};
 
     /// Key size for AES-128-GCM (16 bytes).
     pub const KEY_SIZE: usize = 16;
