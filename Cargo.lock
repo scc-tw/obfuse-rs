@@ -152,7 +152,7 @@ dependencies = [
 
 [[package]]
 name = "inout"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
@@ -167,7 +167,7 @@ checksum = "37c93d8daa9d8a012fd8ab92f088405fb202ea0b6ab73ee2482ae66af4f42091"
 
 [[package]]
 name = "obfuse"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "obfuse-core",
  "obfuse-macros",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "obfuse-core"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "aes-gcm",
  "chacha20poly1305",
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "obfuse-macros"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "aes-gcm",
  "chacha20poly1305",
