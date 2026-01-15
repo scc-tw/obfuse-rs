@@ -103,8 +103,6 @@ obfuse = { version = "0.1", features = ["polymorphic"] }
 - Slightly larger binary size (~150 bytes per string vs ~68 bytes)
 - Minimal runtime overhead (key computation is fast)
 
-See [POLYMORPHIC_VERIFICATION.md](POLYMORPHIC_VERIFICATION.md) for detailed analysis.
-
 ## Usage
 
 ### Basic Usage
