@@ -29,5 +29,6 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 # Internal (version required for crates.io publishing)
-obfuse-core = { version = "0.1.7", path = "obfuse-core" }
-obfuse-macros = { version = "0.1.7", path = "obfuse-macros" }
+# default-features = false ensures feature flags propagate correctly from obfuse crate
+obfuse-core = { version = "0.1.7", path = "obfuse-core", default-features = false }
+obfuse-macros = { version = "0.1.7", path = "obfuse-macros", default-features = false }

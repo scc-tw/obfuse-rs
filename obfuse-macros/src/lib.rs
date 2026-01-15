@@ -12,6 +12,7 @@ use quote::quote;
 
 #[cfg(not(feature = "polymorphic"))]
 mod encrypt;
+#[cfg(feature = "polymorphic")]
 mod polymorphic;
 
 #[cfg(not(feature = "polymorphic"))]

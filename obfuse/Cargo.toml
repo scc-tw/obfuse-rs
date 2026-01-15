@@ -22,3 +22,7 @@ polymorphic = ["obfuse-macros/polymorphic"]
 [dependencies]
 obfuse-core.workspace = true
 obfuse-macros.workspace = true
+
+[[example]]
+name = "polymorphic"
+required-features = ["polymorphic"]

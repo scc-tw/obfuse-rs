@@ -1,5 +1,7 @@
 //! Integration tests for the obfuse library.
 
+#[cfg(not(feature = "polymorphic"))]
+use obfuse::ObfuseStr;
 use obfuse::obfuse;
 
 #[test]
