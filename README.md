@@ -17,11 +17,13 @@ Compile-time string encryption for Rust with runtime decryption and secure memor
 ## Features
 
 - **Compile-time encryption**: Strings are encrypted during compilation, never stored in plaintext in binaries
+- **Polymorphic decryption** (optional): Each string gets unique inline decryption code, eliminating central decryption points
 - **Multiple encryption algorithms**: Choose via Cargo features
   - `aes-256-gcm` (default) - AES-256 in GCM mode
   - `aes-128-gcm` - AES-128 in GCM mode
   - `chacha20-poly1305` - ChaCha20-Poly1305 AEAD
   - `xor` - Simple XOR (fast, less secure, good for obfuscation)
+  - `polymorphic` - Unique inline decryption per string (strongest anti-reversing)
 - **Secure memory handling**: Volatile zeroing of sensitive data on drop
 - **Zero-copy decryption**: Decrypt only when accessed
 - **No runtime dependencies**: Encryption happens at compile time
@@ -75,7 +77,32 @@ obfuse = { version = "0.1", default-features = false, features = ["chacha20-poly
 # Use XOR (fast obfuscation, not cryptographically secure)
 [dependencies]
 obfuse = { version = "0.1", default-features = false, features = ["xor"] }
+
+# Use Polymorphic mode (strongest anti-reversing protection)
+[dependencies]
+obfuse = { version = "0.1", features = ["polymorphic"] }
 ```
+
+### Polymorphic Decryption Mode
+
+**NEW**: Enable polymorphic decryption for maximum anti-reversing protection:
+
+```toml
+[dependencies]
+obfuse = { version = "0.1", features = ["polymorphic"] }
+```
+
+**Benefits:**
+- Each string gets **unique inline decryption code** (no shared functions)
+- Keys are **computed at runtime** from expressions (not stored statically)
+- **Multi-layer transformations** (2-4 random layers: XOR, ADD/SUB, bit rotations)
+- **No central decryption point** - reverse engineers must analyze each string individually
+
+**Trade-offs:**
+- Slightly larger binary size (~150 bytes per string vs ~68 bytes)
+- Minimal runtime overhead (key computation is fast)
+
+See [POLYMORPHIC_VERIFICATION.md](POLYMORPHIC_VERIFICATION.md) for detailed analysis.
 
 ## Usage
 
