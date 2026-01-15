@@ -49,6 +49,15 @@ jobs:
       - name: Test (xor)
         run: cargo test --package obfuse --no-default-features --features xor
 
+      - name: Test (polymorphic)
+        run: cargo test --package obfuse --features polymorphic
+
+      - name: Verify polymorphic binary (Linux only)
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        run: |
+          # Install objdump (should already be available on Ubuntu)
+          cargo test --features polymorphic --test binary_verification -- --nocapture
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
