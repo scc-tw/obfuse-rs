@@ -5,11 +5,17 @@
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
 use syn::{LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input};
 
-mod encrypt;
+#[cfg(not(feature = "polymorphic"))]
+use quote::quote;
 
+#[cfg(not(feature = "polymorphic"))]
+mod encrypt;
+#[cfg(feature = "polymorphic")]
+mod polymorphic;
+
+#[cfg(not(feature = "polymorphic"))]
 use encrypt::{KEY_SIZE, NONCE_SIZE, encrypt};
 
 /// Input to the `obfuse!` macro.
@@ -90,30 +96,48 @@ fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
     let plaintext = input.literal.value();
     let plaintext_bytes = plaintext.as_bytes();
 
-    // Encrypt at compile time
-    let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
+    // Use polymorphic decryption when the feature is enabled
+    #[cfg(feature = "polymorphic")]
+    {
+        let seed = input.seed.as_ref().map(|s| s.value());
+        let mut generator = polymorphic::PolymorphicGenerator::new(seed.as_deref());
+        let (_ciphertext, decryption_code) = generator.generate(plaintext_bytes);
 
-    // Convert to token streams
-    let ciphertext_tokens = byte_array_tokens(&ciphertext);
-    let key_tokens = fixed_byte_array_tokens::<KEY_SIZE>(&key);
-    let nonce_tokens = fixed_byte_array_tokens::<NONCE_SIZE>(&nonce);
+        // Return inline decryption code directly
+        decryption_code
+    }
 
-    quote! {
-        ::obfuse::ObfuseStr::new(
-            &#ciphertext_tokens,
-            #key_tokens,
-            #nonce_tokens,
-        )
+    // Use traditional ObfuseStr approach when polymorphic is not enabled
+    #[cfg(not(feature = "polymorphic"))]
+    {
+        // Encrypt at compile time
+        let (ciphertext, key, nonce) =
+            encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
+
+        // Convert to token streams
+        let ciphertext_tokens = byte_array_tokens(&ciphertext);
+        let key_tokens = fixed_byte_array_tokens::<KEY_SIZE>(&key);
+        let nonce_tokens = fixed_byte_array_tokens::<NONCE_SIZE>(&nonce);
+
+        quote! {
+            ::obfuse::ObfuseStr::new(
+                &#ciphertext_tokens,
+                #key_tokens,
+                #nonce_tokens,
+            )
+        }
     }
 }
 
 /// Generates a token stream for a byte slice: `[0x01, 0x02, ...]`
+#[cfg(not(feature = "polymorphic"))]
 fn byte_array_tokens(bytes: &[u8]) -> TokenStream2 {
     let byte_literals = bytes.iter().map(|b| quote! { #b });
     quote! { [#(#byte_literals),*] }
 }
 
 /// Generates a token stream for a fixed-size byte array: `[0x01, 0x02, ...; N]`
+#[cfg(not(feature = "polymorphic"))]
 fn fixed_byte_array_tokens<const N: usize>(bytes: &[u8; N]) -> TokenStream2 {
     let byte_literals = bytes.iter().map(|b| quote! { #b });
     quote! { [#(#byte_literals),*] }

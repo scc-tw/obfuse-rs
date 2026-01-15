@@ -92,4 +92,8 @@
 pub use obfuse_macros::obfuse;
 
 // Re-export core types
+#[cfg(not(feature = "polymorphic"))]
 pub use obfuse_core::{ObfuseError, ObfuseStr};
+
+#[cfg(feature = "polymorphic")]
+pub use obfuse_core::{ObfuseError, ObfuseStr, ObfuseStrInline};

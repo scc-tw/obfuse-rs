@@ -1,6 +1,8 @@
 //! Integration tests for the obfuse library.
 
-use obfuse::{ObfuseStr, obfuse};
+#[cfg(not(feature = "polymorphic"))]
+use obfuse::ObfuseStr;
+use obfuse::obfuse;
 
 #[test]
 fn test_basic_decryption() {
@@ -11,6 +13,7 @@ fn test_basic_decryption() {
 #[test]
 fn test_empty_string() {
     let secret = obfuse!("");
+    let _: &str = secret.as_str(); // Force type inference
     assert_eq!(secret.as_str(), "");
 }
 
@@ -151,8 +154,18 @@ fn test_deterministic_different_seeds() {
 
 #[test]
 fn test_type_annotation() {
-    let secret: ObfuseStr = obfuse!("typed");
-    assert_eq!(secret.as_str(), "typed");
+    // Test that type annotations work
+    #[cfg(not(feature = "polymorphic"))]
+    {
+        let secret: ObfuseStr = obfuse!("typed");
+        assert_eq!(secret.as_str(), "typed");
+    }
+
+    #[cfg(feature = "polymorphic")]
+    {
+        let secret = obfuse!("typed");
+        assert_eq!(secret.as_str(), "typed");
+    }
 }
 
 #[test]

@@ -11,7 +11,9 @@
       "mcp__serena__read_memory",
       "mcp__serena__find_symbol",
       "mcp__serena__think_about_collected_information",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo clippy:*)",
+      "mcp__plugin_serena_serena__find_symbol",
+      "mcp__plugin_serena_serena__check_onboarding_performed"
     ]
   }
 }

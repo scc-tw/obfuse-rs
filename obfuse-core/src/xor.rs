@@ -33,6 +33,7 @@ pub const NONCE_SIZE: usize = 12;
 ///
 /// # Security Warning
 /// XOR cipher provides NO authentication. Use AEAD ciphers for real security.
+#[allow(clippy::unnecessary_wraps)] // Result needed for API consistency with AEAD ciphers
 pub fn decrypt(
     ciphertext: &[u8],
     key: &[u8; KEY_SIZE],
