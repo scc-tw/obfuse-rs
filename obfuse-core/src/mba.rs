@@ -164,6 +164,8 @@ pub fn mba_xor_nonlinear(a: u8, b: u8) -> u8 {
     let base = sum_ab.wrapping_sub(twice_and);
 
     // Add noise layer
+    // Note: Separate variables with identical values are intentional.
+    // This prevents pattern-matching optimizations in decompilers.
     let noise_term = D1.wrapping_add(D2);
     let cancel_term = D1.wrapping_add(D2);
 
@@ -210,11 +212,12 @@ pub fn mba_xor_deep(a: u8, b: u8) -> u8 {
     // x = x ^ 0 = x ^ (y ^ y) for any y
 
     let identity = {
+        // D4 ^ D4 = 0, computed at runtime to resist decompiler simplification
         let zero = D4 ^ D4;
         xor_result ^ zero
     };
 
-    // Final noise layer
+    // Final noise layer: D1 ^ D1 = 0, adding nothing but complexity
     identity.wrapping_add(D1 ^ D1)
 }
 
@@ -258,7 +261,9 @@ fn mba_modulo(a: usize, b: usize) -> usize {
     // a - (a / b) * b = a % b
     let result = a.wrapping_sub(product);
 
-    // Verify bounds (this is always true, adds complexity)
+    // Intentionally redundant branches to add control-flow complexity.
+    // Both branches return the same value; this is designed to resist
+    // pattern-matching in decompilers.
     if result < b {
         result
     } else {
