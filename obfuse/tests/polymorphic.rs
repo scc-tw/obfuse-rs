@@ -1,7 +1,7 @@
 //! Integration tests for polymorphic decryption mode.
 
 #[cfg(feature = "polymorphic")]
-use obfuse::{ObfuseStrInline, obfuse};
+use obfuse::obfuse;
 
 #[cfg(feature = "polymorphic")]
 #[test]

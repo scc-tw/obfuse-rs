@@ -1,6 +1,6 @@
 //! Integration tests for the obfuse library.
 
-use obfuse::{ObfuseStr, obfuse};
+use obfuse::obfuse;
 
 #[test]
 fn test_basic_decryption() {
