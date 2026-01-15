@@ -49,6 +49,21 @@ jobs:
       - name: Test (xor)
         run: cargo test --package obfuse --no-default-features --features xor
 
+  mba-obfuscation:
+    name: Verify MBA Obfuscation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install binutils (objdump)
+        run: sudo apt-get update && sudo apt-get install -y binutils
+
+      - name: Verify MBA obfuscation is not optimized away
+        run: ./scripts/verify_mba_obfuscation.sh
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest

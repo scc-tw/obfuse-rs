@@ -11,6 +11,12 @@
 //! operations. These expressions are mathematically equivalent but much
 //! harder for decompilers like IDA's Hex-Rays to simplify.
 //!
+//! # Compiler Optimization Prevention
+//!
+//! This module uses `std::hint::black_box` to prevent the Rust compiler
+//! from optimizing away the MBA transformations. Without this, LLVM would
+//! recognize and simplify the mathematically equivalent expressions.
+//!
 //! # Example
 //!
 //! A simple XOR operation `a ^ b` can be replaced with:
@@ -26,6 +32,8 @@
 // Allow intentional obfuscation patterns that clippy doesn't like
 #![allow(clippy::eq_op)] // We intentionally use patterns like D1 ^ D1 = 0
 #![allow(clippy::if_same_then_else)] // Intentional noise in control flow
+
+use std::hint::black_box;
 
 /// Dummy constants for noise injection.
 /// These values are used in MBA expressions to increase complexity
@@ -48,11 +56,14 @@ use constants::{D1, D2, D3, D4};
 /// Mathematical identity: `a ^ b = (a | b) - (a & b)`
 ///
 /// This is then expanded further with dummy operations that cancel out.
-/// The compiler may optimize some of these, but the source-level complexity
-/// makes static analysis and pattern matching much harder.
+/// Uses `black_box` to prevent compiler from optimizing away the obfuscation.
 #[inline(never)]
 #[must_use]
 pub fn mba_xor(a: u8, b: u8) -> u8 {
+    // Wrap inputs in black_box to prevent constant propagation
+    let a = black_box(a);
+    let b = black_box(b);
+
     // Basic MBA identity: a ^ b = (a | b) - (a & b)
     // We expand this with additional noise operations
 
@@ -67,11 +78,11 @@ pub fn mba_xor(a: u8, b: u8) -> u8 {
     // Expand: (a | b) - (a & b) = (a | b) + (-(a & b))
     // Further expand with wrapping arithmetic
 
-    let result = mba_sub(or_ab, and_ab);
+    let result = mba_sub(black_box(or_ab), black_box(and_ab));
 
     // Add identity transformation: result ^ 0 = result
     // But use: result ^ (D1 ^ D1) = result
-    mba_xor_identity(result)
+    black_box(mba_xor_identity(black_box(result)))
 }
 
 /// Computes `a | b` with noise injection.
@@ -82,13 +93,13 @@ pub fn mba_xor(a: u8, b: u8) -> u8 {
 fn mba_or_with_noise(a: u8, b: u8) -> u8 {
     // Direct computation with some noise
     // a | b = a + b - (a & b)  (alternative identity)
-    let and_ab = a & b;
-    let sum = a.wrapping_add(b);
+    let and_ab = black_box(a) & black_box(b);
+    let sum = black_box(a).wrapping_add(black_box(b));
 
     // Add noise that cancels out: + D1 - D1
-    let with_noise = sum.wrapping_add(D1);
-    let sub_and = with_noise.wrapping_sub(and_ab);
-    sub_and.wrapping_sub(D1)
+    let with_noise = black_box(sum).wrapping_add(black_box(D1));
+    let sub_and = black_box(with_noise).wrapping_sub(black_box(and_ab));
+    black_box(sub_and).wrapping_sub(black_box(D1))
 }
 
 /// Computes `a & b` with noise injection.
@@ -100,11 +111,11 @@ fn mba_and_with_noise(a: u8, b: u8) -> u8 {
     // a & b = (a + b - (a | b)) but that's circular
     // Use direct AND with noise wrapping
 
-    let and_ab = a & b;
+    let and_ab = black_box(a) & black_box(b);
 
     // Noise: XOR with D2, then XOR with D2 again to cancel
-    let noised = and_ab ^ D2;
-    noised ^ D2
+    let noised = black_box(and_ab) ^ black_box(D2);
+    black_box(noised) ^ black_box(D2)
 }
 
 /// Computes `a - b` using MBA transformation.
@@ -115,14 +126,14 @@ fn mba_sub(a: u8, b: u8) -> u8 {
     // a - b = a + (~b + 1) = a + (-b)
     // Expand with noise
 
-    let neg_b = (!b).wrapping_add(1);
+    let neg_b = (!black_box(b)).wrapping_add(1);
 
     // a + neg_b with noise
-    let sum = a.wrapping_add(neg_b);
+    let sum = black_box(a).wrapping_add(black_box(neg_b));
 
     // Add/subtract dummy to add noise
-    let noised = sum.wrapping_add(D3);
-    noised.wrapping_sub(D3)
+    let noised = black_box(sum).wrapping_add(black_box(D3));
+    black_box(noised).wrapping_sub(black_box(D3))
 }
 
 /// Applies an identity transformation that preserves the value.
@@ -132,14 +143,14 @@ fn mba_sub(a: u8, b: u8) -> u8 {
 #[inline(never)]
 fn mba_xor_identity(x: u8) -> u8 {
     // x ^ 0 = x, but we compute 0 as (D1 ^ D1) ^ (D4 ^ D4)
-    let zero_1 = D1 ^ D1;
-    let zero_2 = D4 ^ D4;
-    let zero = zero_1 | zero_2; // Still 0
+    let zero_1 = black_box(D1) ^ black_box(D1);
+    let zero_2 = black_box(D4) ^ black_box(D4);
+    let zero = black_box(zero_1) | black_box(zero_2); // Still 0
 
     // Additional complexity: x = x + 0 = x - 0
-    let temp = x ^ zero;
-    let with_add = temp.wrapping_add(D2);
-    with_add.wrapping_sub(D2)
+    let temp = black_box(x) ^ black_box(zero);
+    let with_add = black_box(temp).wrapping_add(black_box(D2));
+    black_box(with_add).wrapping_sub(black_box(D2))
 }
 
 /// Non-linear MBA XOR implementation.
@@ -153,23 +164,31 @@ fn mba_xor_identity(x: u8) -> u8 {
 #[inline(never)]
 #[must_use]
 pub fn mba_xor_nonlinear(a: u8, b: u8) -> u8 {
+    // Wrap inputs to prevent optimization
+    let a = black_box(a);
+    let b = black_box(b);
+
     // Use: a ^ b = (a + b) - 2*(a & b)
     // Equivalent to: a ^ b = (a | b) - (a & b) = 2*(a | b) - (a + b)
 
-    let sum_ab = a.wrapping_add(b);
-    let and_ab = a & b;
-    let twice_and = and_ab.wrapping_mul(2);
+    let sum_ab = black_box(a).wrapping_add(black_box(b));
+    let and_ab = black_box(a) & black_box(b);
+    let twice_and = black_box(and_ab).wrapping_mul(2);
 
     // Base result
-    let base = sum_ab.wrapping_sub(twice_and);
+    let base = black_box(sum_ab).wrapping_sub(black_box(twice_and));
 
     // Add noise layer
     // Note: Separate variables with identical values are intentional.
     // This prevents pattern-matching optimizations in decompilers.
-    let noise_term = D1.wrapping_add(D2);
-    let cancel_term = D1.wrapping_add(D2);
+    let noise_term = black_box(D1).wrapping_add(black_box(D2));
+    let cancel_term = black_box(D1).wrapping_add(black_box(D2));
 
-    base.wrapping_add(noise_term).wrapping_sub(cancel_term)
+    black_box(
+        black_box(base)
+            .wrapping_add(black_box(noise_term))
+            .wrapping_sub(black_box(cancel_term)),
+    )
 }
 
 /// Highly obfuscated XOR using nested MBA expressions.
@@ -179,6 +198,10 @@ pub fn mba_xor_nonlinear(a: u8, b: u8) -> u8 {
 #[inline(never)]
 #[must_use]
 pub fn mba_xor_deep(a: u8, b: u8) -> u8 {
+    // Wrap inputs to prevent optimization
+    let a = black_box(a);
+    let b = black_box(b);
+
     // Level 1: Use MBA identity for XOR
     // a ^ b = (a | b) - (a & b)
 
@@ -186,26 +209,38 @@ pub fn mba_xor_deep(a: u8, b: u8) -> u8 {
     // Compute (a & b) directly with noise
 
     let and_ab = {
-        let direct = a & b;
+        let direct = black_box(a) & black_box(b);
         // Noise: add and subtract D1
-        direct.wrapping_add(D1).wrapping_sub(D1)
+        black_box(
+            black_box(direct)
+                .wrapping_add(black_box(D1))
+                .wrapping_sub(black_box(D1)),
+        )
     };
 
     let or_ab = {
         // a | b = a + b - (a & b)
-        let sum = a.wrapping_add(b);
-        let result = sum.wrapping_sub(and_ab);
+        let sum = black_box(a).wrapping_add(black_box(b));
+        let result = black_box(sum).wrapping_sub(black_box(and_ab));
         // Noise
-        result.wrapping_add(D2).wrapping_sub(D2)
+        black_box(
+            black_box(result)
+                .wrapping_add(black_box(D2))
+                .wrapping_sub(black_box(D2)),
+        )
     };
 
     // Level 2: Compute XOR from OR and AND
     // a ^ b = (a | b) - (a & b)
 
     let xor_result = {
-        let diff = or_ab.wrapping_sub(and_ab);
+        let diff = black_box(or_ab).wrapping_sub(black_box(and_ab));
         // More noise
-        diff.wrapping_add(D3).wrapping_sub(D3)
+        black_box(
+            black_box(diff)
+                .wrapping_add(black_box(D3))
+                .wrapping_sub(black_box(D3)),
+        )
     };
 
     // Level 3: Apply identity transformation
@@ -213,12 +248,12 @@ pub fn mba_xor_deep(a: u8, b: u8) -> u8 {
 
     let identity = {
         // D4 ^ D4 = 0, computed at runtime to resist decompiler simplification
-        let zero = D4 ^ D4;
-        xor_result ^ zero
+        let zero = black_box(D4) ^ black_box(D4);
+        black_box(xor_result) ^ black_box(zero)
     };
 
     // Final noise layer: D1 ^ D1 = 0, adding nothing but complexity
-    identity.wrapping_add(D1 ^ D1)
+    black_box(black_box(identity).wrapping_add(black_box(D1) ^ black_box(D1)))
 }
 
 /// Performs XOR decryption on a byte slice using MBA transformations.
@@ -264,11 +299,7 @@ fn mba_modulo(a: usize, b: usize) -> usize {
     // Intentionally redundant branches to add control-flow complexity.
     // Both branches return the same value; this is designed to resist
     // pattern-matching in decompilers.
-    if result < b {
-        result
-    } else {
-        result
-    }
+    if result < b { result } else { result }
 }
 
 #[cfg(test)]
@@ -375,7 +406,11 @@ mod tests {
     #[test]
     fn test_mba_xor_identity() {
         for x in 0..=255u8 {
-            assert_eq!(mba_xor_identity(x), x, "mba_xor_identity({x}) should equal {x}");
+            assert_eq!(
+                mba_xor_identity(x),
+                x,
+                "mba_xor_identity({x}) should equal {x}"
+            );
         }
     }
 
