@@ -1,9 +1,14 @@
-//! XOR cipher decryption implementation.
+//! XOR cipher decryption implementation with MBA obfuscation.
 //!
-//! This is a simple obfuscation method, NOT cryptographically secure.
-//! Use only when performance is critical and strong security is not required.
+//! This module uses Mixed Boolean-Arithmetic (MBA) transformations to obfuscate
+//! the XOR decryption logic, making it significantly harder for decompilers
+//! like IDA's Hex-Rays to simplify the code.
+//!
+//! # Security Warning
+//! XOR cipher provides NO authentication. Use AEAD ciphers for real security.
 
 use crate::ObfuseError;
+use crate::mba;
 
 /// Key size for XOR cipher (32 bytes for consistency).
 pub const KEY_SIZE: usize = 32;
@@ -11,7 +16,12 @@ pub const KEY_SIZE: usize = 32;
 /// Nonce size for XOR cipher (not used, but kept for API consistency).
 pub const NONCE_SIZE: usize = 12;
 
-/// Decrypts ciphertext using XOR cipher.
+/// Decrypts ciphertext using MBA-obfuscated XOR cipher.
+///
+/// This implementation uses Mixed Boolean-Arithmetic transformations
+/// to make the decryption logic extremely difficult to reverse engineer.
+/// The XOR operation `a ^ b` is replaced with complex MBA expressions
+/// that are mathematically equivalent but resist decompiler simplification.
 ///
 /// # Arguments
 /// * `ciphertext` - The XOR-encrypted data
@@ -28,11 +38,7 @@ pub fn decrypt(
     key: &[u8; KEY_SIZE],
     _nonce: &[u8; NONCE_SIZE],
 ) -> Result<Box<[u8]>, ObfuseError> {
-    let plaintext: Vec<u8> = ciphertext
-        .iter()
-        .enumerate()
-        .map(|(i, &byte)| byte ^ key[i % KEY_SIZE])
-        .collect();
-
+    // Use MBA-obfuscated XOR decryption
+    let plaintext = mba::mba_decrypt_xor(ciphertext, key, KEY_SIZE);
     Ok(plaintext.into_boxed_slice())
 }

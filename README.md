@@ -21,7 +21,8 @@ Compile-time string encryption for Rust with runtime decryption and secure memor
   - `aes-256-gcm` (default) - AES-256 in GCM mode
   - `aes-128-gcm` - AES-128 in GCM mode
   - `chacha20-poly1305` - ChaCha20-Poly1305 AEAD
-  - `xor` - Simple XOR (fast, less secure, good for obfuscation)
+  - `xor` - Simple XOR with MBA obfuscation (fast, less secure)
+- **MBA (Mixed Boolean-Arithmetic) transformations**: XOR decryption uses mathematically equivalent but complex expressions to resist decompiler simplification (e.g., IDA's Hex-Rays)
 - **Secure memory handling**: Volatile zeroing of sensitive data on drop
 - **Zero-copy decryption**: Decrypt only when accessed
 - **No runtime dependencies**: Encryption happens at compile time
@@ -180,6 +181,39 @@ fn get_secret() -> Result<String, ObfuseStrError> {
    - Uses `std::ptr::write_volatile` to zero all sensitive memory
    - Zeros: encryption key, nonce, and decrypted plaintext
    - Prevents compiler from optimizing away the zeroing
+
+## MBA (Mixed Boolean-Arithmetic) Transformations
+
+When using the `xor` feature, decryption logic is obfuscated using MBA transformations to resist decompiler simplification.
+
+### What are MBA Transformations?
+
+MBA transformations replace simple operations with mathematically equivalent but complex expressions. For example:
+
+```text
+Simple XOR:        a ^ b
+MBA equivalent:    (a | b) - (a & b)
+With noise:        ((a | b) + D1 - D1) - ((a & b) + D2 - D2) + (D3 ^ D3)
+```
+
+### Why Use MBA?
+
+Decompilers like IDA's Hex-Rays are excellent at recognizing and simplifying straightforward operations. MBA transformations:
+
+- **Resist pattern matching**: The complex expressions don't match known simplification patterns
+- **Expand simple operations**: A single XOR becomes many lines of arithmetic/logic
+- **Include noise operations**: Dummy constants that cancel out add visual complexity
+- **Combine Boolean and arithmetic**: Mixing `AND`, `OR`, `XOR` with `+`, `-`, `*` prevents easy reduction
+
+### Example Decompiler Output
+
+Without MBA, a simple decryption loop might decompile as:
+```c
+for (i = 0; i < len; i++)
+    plaintext[i] = ciphertext[i] ^ key[i % 32];
+```
+
+With MBA transformations, the same logic becomes dozens of lines of convoluted operations, making reverse engineering significantly more time-consuming.
 
 ## Build Modes: Random vs Deterministic
 

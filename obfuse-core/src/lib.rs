@@ -18,6 +18,7 @@
 #![warn(clippy::pedantic)]
 
 mod error;
+pub mod mba;
 mod obfuse_str;
 
 // Only compile the module that's actually selected (mutually exclusive features)
