@@ -17,6 +17,7 @@ aes-256-gcm = ["obfuse-core/aes-256-gcm", "obfuse-macros/aes-256-gcm"]
 aes-128-gcm = ["obfuse-core/aes-128-gcm", "obfuse-macros/aes-128-gcm"]
 chacha20-poly1305 = ["obfuse-core/chacha20-poly1305", "obfuse-macros/chacha20-poly1305"]
 xor = ["obfuse-core/xor", "obfuse-macros/xor"]
+polymorphic = ["obfuse-macros/polymorphic"]
 
 [dependencies]
 obfuse-core.workspace = true

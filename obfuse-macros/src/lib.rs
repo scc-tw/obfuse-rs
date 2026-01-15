@@ -9,6 +9,7 @@ use quote::quote;
 use syn::{LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input};
 
 mod encrypt;
+mod polymorphic;
 
 use encrypt::{KEY_SIZE, NONCE_SIZE, encrypt};
 
@@ -90,20 +91,35 @@ fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
     let plaintext = input.literal.value();
     let plaintext_bytes = plaintext.as_bytes();
 
-    // Encrypt at compile time
-    let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
+    // Use polymorphic decryption when the feature is enabled
+    #[cfg(feature = "polymorphic")]
+    {
+        let seed = input.seed.as_ref().map(|s| s.value());
+        let mut generator = polymorphic::PolymorphicGenerator::new(seed.as_deref());
+        let (_ciphertext, decryption_code) = generator.generate(plaintext_bytes);
+        
+        // Return inline decryption code directly
+        decryption_code
+    }
 
-    // Convert to token streams
-    let ciphertext_tokens = byte_array_tokens(&ciphertext);
-    let key_tokens = fixed_byte_array_tokens::<KEY_SIZE>(&key);
-    let nonce_tokens = fixed_byte_array_tokens::<NONCE_SIZE>(&nonce);
+    // Use traditional ObfuseStr approach when polymorphic is not enabled
+    #[cfg(not(feature = "polymorphic"))]
+    {
+        // Encrypt at compile time
+        let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
 
-    quote! {
-        ::obfuse::ObfuseStr::new(
-            &#ciphertext_tokens,
-            #key_tokens,
-            #nonce_tokens,
-        )
+        // Convert to token streams
+        let ciphertext_tokens = byte_array_tokens(&ciphertext);
+        let key_tokens = fixed_byte_array_tokens::<KEY_SIZE>(&key);
+        let nonce_tokens = fixed_byte_array_tokens::<NONCE_SIZE>(&nonce);
+
+        quote! {
+            ::obfuse::ObfuseStr::new(
+                &#ciphertext_tokens,
+                #key_tokens,
+                #nonce_tokens,
+            )
+        }
     }
 }
 

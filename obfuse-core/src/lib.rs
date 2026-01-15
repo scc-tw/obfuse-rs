@@ -19,6 +19,7 @@
 
 mod error;
 mod obfuse_str;
+mod obfuse_str_inline;
 
 // Only compile the module that's actually selected (mutually exclusive features)
 #[cfg(any(
@@ -45,6 +46,7 @@ mod xor;
 
 pub use error::ObfuseError;
 pub use obfuse_str::ObfuseStr;
+pub use obfuse_str_inline::ObfuseStrInline;
 
 // Re-export constants for use by the macro crate
 #[cfg(feature = "aes-256-gcm")]

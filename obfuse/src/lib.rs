@@ -92,4 +92,4 @@
 pub use obfuse_macros::obfuse;
 
 // Re-export core types
-pub use obfuse_core::{ObfuseError, ObfuseStr};
+pub use obfuse_core::{ObfuseError, ObfuseStr, ObfuseStrInline};
