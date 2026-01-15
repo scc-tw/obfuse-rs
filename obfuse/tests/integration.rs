@@ -11,7 +11,7 @@ fn test_basic_decryption() {
 #[test]
 fn test_empty_string() {
     let secret = obfuse!("");
-    let _: &str = secret.as_str();  // Force type inference
+    let _: &str = secret.as_str(); // Force type inference
     assert_eq!(secret.as_str(), "");
 }
 
@@ -158,7 +158,7 @@ fn test_type_annotation() {
         let secret: ObfuseStr = obfuse!("typed");
         assert_eq!(secret.as_str(), "typed");
     }
-    
+
     #[cfg(feature = "polymorphic")]
     {
         let secret = obfuse!("typed");

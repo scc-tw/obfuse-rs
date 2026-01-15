@@ -11,10 +11,17 @@ fn test_polymorphic_not_optimized_away() {
     use std::process::Command;
 
     println!("Building polymorphic example in release mode...");
-    
+
     // Build the polymorphic example
     let build_output = Command::new("cargo")
-        .args(&["build", "--release", "--example", "polymorphic", "--features", "polymorphic"])
+        .args(&[
+            "build",
+            "--release",
+            "--example",
+            "polymorphic",
+            "--features",
+            "polymorphic",
+        ])
         .output()
         .expect("Failed to build polymorphic example");
 
@@ -27,18 +34,18 @@ fn test_polymorphic_not_optimized_away() {
     println!("Build successful, analyzing binary...");
 
     // Path to the binary (relative to workspace root)
-    let cargo_manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .expect("CARGO_MANIFEST_DIR not set");
+    let cargo_manifest_dir =
+        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
     let workspace_root = std::path::Path::new(&cargo_manifest_dir)
         .parent()
         .expect("Failed to get workspace root");
-    
+
     let binary_name = if cfg!(target_os = "windows") {
         "polymorphic.exe"
     } else {
         "polymorphic"
     };
-    
+
     let binary_path = workspace_root
         .join("target")
         .join("release")
@@ -60,14 +67,14 @@ fn test_polymorphic_not_optimized_away() {
     if let Ok(output) = objdump_output {
         if output.status.success() {
             let disasm = String::from_utf8_lossy(&output.stdout);
-            
+
             // Count transformation instructions
             let xor_count = disasm.matches("xor").count();
             let add_count = disasm.matches("add").count();
             let sub_count = disasm.matches("sub").count();
             let rol_count = disasm.matches("rol").count();
             let ror_count = disasm.matches("ror").count();
-            
+
             println!("Instruction counts:");
             println!("  XOR: {}", xor_count);
             println!("  ADD: {}", add_count);
@@ -139,7 +146,7 @@ fn test_polymorphic_not_optimized_away() {
     );
 
     let output_str = String::from_utf8_lossy(&run_output.stdout);
-    
+
     // Verify expected strings are in output
     assert!(
         output_str.contains("sk_live_abc123"),

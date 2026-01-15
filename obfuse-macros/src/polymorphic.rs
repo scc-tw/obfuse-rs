@@ -65,7 +65,7 @@ impl PolymorphicGenerator {
     pub fn generate(&mut self, plaintext: &[u8]) -> (Vec<u8>, TokenStream2) {
         // Determine number of transformation layers (2-4 layers)
         let num_layers = self.rng.random_range(2..=4);
-        
+
         // Generate transformation layers
         let mut layers = Vec::new();
         for _ in 0..num_layers {
@@ -84,7 +84,7 @@ impl PolymorphicGenerator {
     /// Generate a single transformation layer
     fn generate_layer(&mut self) -> TransformLayer {
         let transform = Transform::random(&mut self.rng);
-        
+
         // Generate 4-8 random constants for key derivation
         let num_constants = self.rng.random_range(4..=8);
         let mut key_constants = Vec::new();
@@ -150,10 +150,14 @@ impl PolymorphicGenerator {
     }
 
     /// Generate inline decryption code as token stream
-    fn generate_inline_decryption(&mut self, ciphertext: &[u8], layers: &[TransformLayer]) -> TokenStream2 {
+    fn generate_inline_decryption(
+        &mut self,
+        ciphertext: &[u8],
+        layers: &[TransformLayer],
+    ) -> TokenStream2 {
         // Generate ciphertext array with explicit type annotation to help inference
         let ct_bytes = ciphertext.iter().map(|b| quote! { #b });
-        
+
         // Generate layer decryption code (apply in reverse order)
         let mut layer_code = Vec::new();
         for layer in layers.iter().rev() {
@@ -165,9 +169,9 @@ impl PolymorphicGenerator {
         quote! {
             ::obfuse::ObfuseStrInline::new(|| -> ::std::result::Result<::std::string::String, ::obfuse::ObfuseError> {
                 let mut data: ::std::vec::Vec<u8> = [#(#ct_bytes),*].to_vec();
-                
+
                 #(#layer_code)*
-                
+
                 // Convert to String
                 ::std::string::String::from_utf8(data)
                     .map_err(|e| ::obfuse::ObfuseError::InvalidUtf8(e.utf8_error()))
@@ -179,7 +183,7 @@ impl PolymorphicGenerator {
     fn generate_layer_code(&mut self, layer: &TransformLayer) -> TokenStream2 {
         // Generate key derivation code
         let key_derivation = self.generate_key_derivation_code(&layer.key_constants);
-        
+
         // Generate transformation code based on type
         let transform_code = match layer.transform {
             Transform::Xor => quote! {
@@ -221,7 +225,7 @@ impl PolymorphicGenerator {
     fn generate_key_derivation_code(&self, constants: &[u8]) -> TokenStream2 {
         // Generate the constants array
         let const_bytes = constants.iter().map(|b| quote! { #b });
-        
+
         quote! {
             {
                 const CONSTANTS: &[u8] = &[#(#const_bytes),*];
@@ -271,7 +275,7 @@ mod tests {
         let mut generator = PolymorphicGenerator::new(Some("test_seed"));
         let plaintext = b"Hello, World!";
         let (ciphertext, _code) = generator.generate(plaintext);
-        
+
         // Ciphertext should be different from plaintext
         assert_ne!(ciphertext.as_slice(), plaintext);
     }
@@ -280,11 +284,11 @@ mod tests {
     fn test_deterministic_generation() {
         let mut gen1 = PolymorphicGenerator::new(Some("test_seed"));
         let mut gen2 = PolymorphicGenerator::new(Some("test_seed"));
-        
+
         let plaintext = b"Hello, World!";
         let (ct1, _) = gen1.generate(plaintext);
         let (ct2, _) = gen2.generate(plaintext);
-        
+
         // Same seed should produce same ciphertext
         assert_eq!(ct1, ct2);
     }
@@ -293,11 +297,11 @@ mod tests {
     fn test_different_seeds_produce_different_output() {
         let mut gen1 = PolymorphicGenerator::new(Some("seed1"));
         let mut gen2 = PolymorphicGenerator::new(Some("seed2"));
-        
+
         let plaintext = b"Hello, World!";
         let (ct1, _) = gen1.generate(plaintext);
         let (ct2, _) = gen2.generate(plaintext);
-        
+
         // Different seeds should produce different ciphertext
         assert_ne!(ct1, ct2);
     }

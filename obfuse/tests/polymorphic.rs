@@ -14,7 +14,7 @@ fn test_polymorphic_basic_decryption() {
 #[test]
 fn test_polymorphic_empty_string() {
     let secret = obfuse!("");
-    let _: &str = secret.as_str();  // Force type inference
+    let _: &str = secret.as_str(); // Force type inference
     assert_eq!(secret.as_str(), "");
 }
 
@@ -147,7 +147,7 @@ fn test_polymorphic_debug_redacts() {
 #[test]
 fn test_polymorphic_multiple_accesses() {
     let secret = obfuse!("test");
-    
+
     // First access
     assert_eq!(secret.as_str(), "test");
     // Second access (from cache)
@@ -159,11 +159,11 @@ fn test_polymorphic_multiple_accesses() {
 #[cfg(feature = "polymorphic")]
 #[test]
 fn test_polymorphic_concurrent_access() {
-    use std::thread;
     use std::sync::Arc;
+    use std::thread;
 
     let secret = Arc::new(obfuse!("concurrent test"));
-    
+
     let handles: Vec<_> = (0..10)
         .map(|_| {
             let secret_clone = Arc::clone(&secret);
@@ -183,7 +183,7 @@ fn test_polymorphic_concurrent_access() {
 fn test_polymorphic_deterministic_same_seed() {
     let secret1 = obfuse!("test string", seed = "same_seed");
     let secret2 = obfuse!("test string", seed = "same_seed");
-    
+
     // With the same seed, the same plaintext should decrypt correctly
     assert_eq!(secret1.as_str(), "test string");
     assert_eq!(secret2.as_str(), "test string");
@@ -194,7 +194,7 @@ fn test_polymorphic_deterministic_same_seed() {
 fn test_polymorphic_deterministic_different_seeds() {
     let secret1 = obfuse!("test string", seed = "seed1");
     let secret2 = obfuse!("test string", seed = "seed2");
-    
+
     // Both should decrypt to the same plaintext
     assert_eq!(secret1.as_str(), "test string");
     assert_eq!(secret2.as_str(), "test string");
@@ -207,11 +207,11 @@ fn test_polymorphic_unique_encryption_per_string() {
     // should produce different encryption (in non-deterministic mode)
     let secret1 = obfuse!("same content");
     let secret2 = obfuse!("same content");
-    
+
     // Both should decrypt correctly
     assert_eq!(secret1.as_str(), "same content");
     assert_eq!(secret2.as_str(), "same content");
-    
+
     // The actual decryption happens independently for each
 }
 

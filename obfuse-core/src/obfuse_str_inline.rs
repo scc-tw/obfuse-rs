@@ -82,7 +82,9 @@ impl ObfuseStrInline {
 
         // Return the stored value - this should always succeed since we just set it
         // or another thread set it concurrently
-        Ok(self.decrypted.get()
+        Ok(self
+            .decrypted
+            .get()
             .ok_or(ObfuseError::AllocationFailed)?
             .as_str())
     }

@@ -101,7 +101,7 @@ fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
         let seed = input.seed.as_ref().map(|s| s.value());
         let mut generator = polymorphic::PolymorphicGenerator::new(seed.as_deref());
         let (_ciphertext, decryption_code) = generator.generate(plaintext_bytes);
-        
+
         // Return inline decryption code directly
         decryption_code
     }
@@ -110,7 +110,8 @@ fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
     #[cfg(not(feature = "polymorphic"))]
     {
         // Encrypt at compile time
-        let (ciphertext, key, nonce) = encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
+        let (ciphertext, key, nonce) =
+            encrypt(plaintext_bytes, input.seed.as_ref().map(LitStr::value));
 
         // Convert to token streams
         let ciphertext_tokens = byte_array_tokens(&ciphertext);
