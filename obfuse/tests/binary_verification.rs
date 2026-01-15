@@ -148,10 +148,7 @@ fn test_polymorphic_not_optimized_away() {
             );
         } else {
             println!("Warning: objdump failed, skipping disassembly verification");
-            println!(
-                "stderr: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
+            println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
         }
     } else {
         println!("Warning: objdump not available, skipping disassembly verification");
