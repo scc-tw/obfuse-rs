@@ -36,8 +36,20 @@ if [ ! -f "$RLIB_FILE" ]; then
 fi
 
 # Extract assembly for mba_xor_deep function
+# Use section boundary detection to extract the complete function
 echo "Extracting assembly for mba_xor_deep..."
-ASSEMBLY=$(objdump -d "$RLIB_FILE" 2>/dev/null | grep -A 200 "mba_xor_deep" | head -150)
+
+# Find the function and extract until the next function/section header
+# The function ends at "ret" followed by a blank line or section header
+ASSEMBLY=$(objdump -d "$RLIB_FILE" 2>/dev/null | \
+    awk '/mba_xor_deep/{found=1} found{print; if(/^$/ && found>1) exit} found{found++}' | \
+    head -300)
+
+# Fallback to simpler grep if awk didn't capture enough
+if [ "$(echo "$ASSEMBLY" | wc -l)" -lt 20 ]; then
+    ASSEMBLY=$(objdump -d "$RLIB_FILE" 2>/dev/null | grep -A 300 "mba_xor_deep" | \
+        sed -n '1,/^Disassembly of section/p' | head -n -1)
+fi
 
 if [ -z "$ASSEMBLY" ]; then
     echo "ERROR: Could not find mba_xor_deep function in disassembly"
@@ -84,19 +96,16 @@ fi
 echo "✓ Dummy constants check passed ($TOTAL_CONSTANTS occurrences found)"
 
 # Check that it's not just a simple XOR instruction
-# A simple optimized XOR would have pattern like: xor %esi,%eax; ret
-SIMPLE_XOR_PATTERN="xor.*%.*%.*\n.*ret"
-if echo "$ASSEMBLY" | head -5 | grep -qE "xor.*%.*%.*" && \
-   echo "$ASSEMBLY" | head -5 | grep -qE "ret"; then
-    # Check if the function is trivially small
-    FIRST_FEW_LINES=$(echo "$ASSEMBLY" | head -10)
-    RET_LINE=$(echo "$FIRST_FEW_LINES" | grep -n "ret" | head -1 | cut -d: -f1)
-    if [ -n "$RET_LINE" ] && [ "$RET_LINE" -lt 6 ]; then
-        echo "FAILED: Function appears to be trivially simplified"
-        echo "Assembly:"
-        echo "$ASSEMBLY" | head -20
-        exit 1
-    fi
+# A trivially simplified function would be just: mov, xor, ret (3-5 instructions)
+# Check if the function ends too quickly (within first 10 lines)
+FIRST_10_LINES=$(echo "$ASSEMBLY" | head -10)
+RET_IN_FIRST_10=$(echo "$FIRST_10_LINES" | grep -c "	ret$" || true)
+
+if [ "$RET_IN_FIRST_10" -gt 0 ] && [ "$INSTRUCTION_COUNT" -lt 10 ]; then
+    echo "FAILED: Function appears to be trivially simplified (ret found too early)"
+    echo "Assembly:"
+    echo "$ASSEMBLY" | head -20
+    exit 1
 fi
 
 echo "✓ Non-trivial assembly check passed"
