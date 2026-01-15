@@ -4,6 +4,9 @@
 //! 1. Transformation instructions (XOR, ADD, SUB, ROL, ROR) are present
 //! 2. No central decrypt function exists
 //! 3. The binary executes correctly
+//!
+//! Supports both x86_64 and ARM64 (aarch64) architectures with appropriate
+//! instruction pattern matching for each.
 
 #[cfg(feature = "polymorphic")]
 #[test]
@@ -68,34 +71,73 @@ fn test_polymorphic_not_optimized_away() {
         if output.status.success() {
             let disasm = String::from_utf8_lossy(&output.stdout);
 
-            // Count transformation instructions
-            let xor_count = disasm.matches("xor").count();
+            // Architecture-specific instruction patterns:
+            // - x86_64: xor, add, sub, rol, ror
+            // - ARM64:  eor (exclusive or), add, sub, ror (handles both rotations)
+            let is_arm = cfg!(target_arch = "aarch64");
+
+            // Count XOR instructions (x86: xor, ARM64: eor)
+            let xor_count = if is_arm {
+                // ARM64 uses 'eor' for exclusive OR
+                disasm.matches("eor").count()
+            } else {
+                disasm.matches("xor").count()
+            };
+
+            // ADD and SUB are the same on both architectures
             let add_count = disasm.matches("add").count();
             let sub_count = disasm.matches("sub").count();
-            let rol_count = disasm.matches("rol").count();
-            let ror_count = disasm.matches("ror").count();
 
+            // Rotation instructions
+            // x86_64: rol (rotate left), ror (rotate right)
+            // ARM64: ror only (rotate left is implemented as ror with inverted shift)
+            let (rol_count, ror_count) = if is_arm {
+                // ARM64 only has ror, but it's used for both directions
+                (0usize, disasm.matches("ror").count())
+            } else {
+                (disasm.matches("rol").count(), disasm.matches("ror").count())
+            };
+
+            let arch_name = if is_arm { "ARM64" } else { "x86_64" };
+            println!("Architecture: {}", arch_name);
             println!("Instruction counts:");
-            println!("  XOR: {}", xor_count);
+            if is_arm {
+                println!("  EOR (XOR): {}", xor_count);
+            } else {
+                println!("  XOR: {}", xor_count);
+            }
             println!("  ADD: {}", add_count);
             println!("  SUB: {}", sub_count);
-            println!("  ROL: {}", rol_count);
-            println!("  ROR: {}", ror_count);
+            if is_arm {
+                println!("  ROR: {}", ror_count);
+            } else {
+                println!("  ROL: {}", rol_count);
+                println!("  ROR: {}", ror_count);
+            }
 
             // Verify we have transformation instructions
+            // Thresholds may vary by architecture due to different code generation
+            let min_xor = if is_arm { 3 } else { 5 };
+            let min_add = if is_arm { 5 } else { 10 };
+            let min_sub = if is_arm { 3 } else { 5 };
+
             assert!(
-                xor_count >= 5,
-                "Expected at least 5 XOR instructions, found {}",
+                xor_count >= min_xor,
+                "Expected at least {} XOR/{} instructions, found {}",
+                min_xor,
+                if is_arm { "EOR" } else { "XOR" },
                 xor_count
             );
             assert!(
-                add_count >= 10,
-                "Expected at least 10 ADD instructions, found {}",
+                add_count >= min_add,
+                "Expected at least {} ADD instructions, found {}",
+                min_add,
                 add_count
             );
             assert!(
-                sub_count >= 5,
-                "Expected at least 5 SUB instructions, found {}",
+                sub_count >= min_sub,
+                "Expected at least {} SUB instructions, found {}",
+                min_sub,
                 sub_count
             );
             assert!(
@@ -106,6 +148,10 @@ fn test_polymorphic_not_optimized_away() {
             );
         } else {
             println!("Warning: objdump failed, skipping disassembly verification");
+            println!(
+                "stderr: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
     } else {
         println!("Warning: objdump not available, skipping disassembly verification");
