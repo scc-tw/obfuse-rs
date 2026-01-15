@@ -5,8 +5,10 @@
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
 use syn::{LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input};
+
+#[cfg(not(feature = "polymorphic"))]
+use quote::quote;
 
 #[cfg(not(feature = "polymorphic"))]
 mod encrypt;

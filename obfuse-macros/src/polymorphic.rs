@@ -163,14 +163,14 @@ impl PolymorphicGenerator {
 
         // Generate complete inline decryption wrapped in ObfuseStrInline
         quote! {
-            ::obfuse::ObfuseStrInline::new(|| -> ::std::string::String {
+            ::obfuse::ObfuseStrInline::new(|| -> ::std::result::Result<::std::string::String, ::obfuse::ObfuseError> {
                 let mut data: ::std::vec::Vec<u8> = [#(#ct_bytes),*].to_vec();
                 
                 #(#layer_code)*
                 
                 // Convert to String
                 ::std::string::String::from_utf8(data)
-                    .expect("ObfuseStr decryption produced invalid UTF-8")
+                    .map_err(|e| ::obfuse::ObfuseError::InvalidUtf8(e.utf8_error()))
             })
         }
     }

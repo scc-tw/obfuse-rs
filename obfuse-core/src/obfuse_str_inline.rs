@@ -28,7 +28,7 @@ use crate::error::ObfuseError;
 /// decryption happens exactly once via `OnceLock`.
 pub struct ObfuseStrInline {
     /// Inline decryption function (boxed to erase the specific closure type)
-    decrypt_fn: Box<dyn Fn() -> String + Send + Sync>,
+    decrypt_fn: Box<dyn Fn() -> Result<String, ObfuseError> + Send + Sync>,
 
     /// Lazily initialized decrypted plaintext
     decrypted: OnceLock<String>,
@@ -42,7 +42,7 @@ impl ObfuseStrInline {
     #[must_use]
     pub fn new<F>(decrypt_fn: F) -> Self
     where
-        F: Fn() -> String + Send + Sync + 'static,
+        F: Fn() -> Result<String, ObfuseError> + Send + Sync + 'static,
     {
         Self {
             decrypt_fn: Box::new(decrypt_fn),
@@ -54,7 +54,7 @@ impl ObfuseStrInline {
     ///
     /// # Panics
     ///
-    /// This should never panic unless the inline decryption code is invalid.
+    /// Panics if decryption fails. Use `try_as_str()` for error handling.
     #[inline]
     pub fn as_str(&self) -> &str {
         self.try_as_str()
@@ -65,26 +65,26 @@ impl ObfuseStrInline {
     ///
     /// # Errors
     ///
-    /// Returns an error if the decrypted bytes are not valid UTF-8.
-    ///
-    /// # Panics
-    ///
-    /// This function should never panic under normal circumstances. The internal
-    /// `expect` is a safeguard that triggers only if the `OnceLock` fails to store
-    /// a value, which cannot happen in correct usage.
+    /// Returns an error if:
+    /// - The decrypted bytes are not valid UTF-8
+    /// - AEAD authentication fails (if using combined encryption)
+    /// - Memory allocation fails
     pub fn try_as_str(&self) -> Result<&str, ObfuseError> {
         if let Some(cached) = self.decrypted.get() {
             return Ok(cached.as_str());
         }
 
         // Perform decryption by calling the inline function
-        let plaintext = (self.decrypt_fn)();
+        let plaintext = (self.decrypt_fn)()?;
 
-        // Store the result
+        // Store the result (we ignore the error since concurrent calls are fine)
         let _ = self.decrypted.set(plaintext);
 
-        // Return the stored value
-        Ok(self.decrypted.get().expect("value was just set").as_str())
+        // Return the stored value - this should always succeed since we just set it
+        // or another thread set it concurrently
+        Ok(self.decrypted.get()
+            .ok_or(ObfuseError::AllocationFailed)?
+            .as_str())
     }
 
     /// Returns the decrypted bytes, decrypting on first access.
