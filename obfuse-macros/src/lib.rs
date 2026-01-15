@@ -8,9 +8,11 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{LitStr, Token, parse::Parse, parse::ParseStream, parse_macro_input};
 
+#[cfg(not(feature = "polymorphic"))]
 mod encrypt;
 mod polymorphic;
 
+#[cfg(not(feature = "polymorphic"))]
 use encrypt::{KEY_SIZE, NONCE_SIZE, encrypt};
 
 /// Input to the `obfuse!` macro.
@@ -124,12 +126,14 @@ fn obfuse_impl(input: &ObfuseInput) -> TokenStream2 {
 }
 
 /// Generates a token stream for a byte slice: `[0x01, 0x02, ...]`
+#[cfg(not(feature = "polymorphic"))]
 fn byte_array_tokens(bytes: &[u8]) -> TokenStream2 {
     let byte_literals = bytes.iter().map(|b| quote! { #b });
     quote! { [#(#byte_literals),*] }
 }
 
 /// Generates a token stream for a fixed-size byte array: `[0x01, 0x02, ...; N]`
+#[cfg(not(feature = "polymorphic"))]
 fn fixed_byte_array_tokens<const N: usize>(bytes: &[u8; N]) -> TokenStream2 {
     let byte_literals = bytes.iter().map(|b| quote! { #b });
     quote! { [#(#byte_literals),*] }

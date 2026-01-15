@@ -66,6 +66,12 @@ impl ObfuseStrInline {
     /// # Errors
     ///
     /// Returns an error if the decrypted bytes are not valid UTF-8.
+    ///
+    /// # Panics
+    ///
+    /// This function should never panic under normal circumstances. The internal
+    /// `expect` is a safeguard that triggers only if the `OnceLock` fails to store
+    /// a value, which cannot happen in correct usage.
     pub fn try_as_str(&self) -> Result<&str, ObfuseError> {
         if let Some(cached) = self.decrypted.get() {
             return Ok(cached.as_str());
