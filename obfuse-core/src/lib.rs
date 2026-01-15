@@ -18,6 +18,7 @@
 #![warn(clippy::pedantic)]
 
 mod error;
+pub mod mba;
 mod obfuse_str;
 mod obfuse_str_inline;
 
