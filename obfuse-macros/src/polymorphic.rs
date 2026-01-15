@@ -151,7 +151,7 @@ impl PolymorphicGenerator {
 
     /// Generate inline decryption code as token stream
     fn generate_inline_decryption(&mut self, ciphertext: &[u8], layers: &[TransformLayer]) -> TokenStream2 {
-        // Generate ciphertext array
+        // Generate ciphertext array with explicit type annotation to help inference
         let ct_bytes = ciphertext.iter().map(|b| quote! { #b });
         
         // Generate layer decryption code (apply in reverse order)
@@ -163,8 +163,8 @@ impl PolymorphicGenerator {
 
         // Generate complete inline decryption wrapped in ObfuseStrInline
         quote! {
-            ::obfuse::ObfuseStrInline::new(|| {
-                let mut data = [#(#ct_bytes),*].to_vec();
+            ::obfuse::ObfuseStrInline::new(|| -> ::std::string::String {
+                let mut data: ::std::vec::Vec<u8> = [#(#ct_bytes),*].to_vec();
                 
                 #(#layer_code)*
                 

@@ -26,29 +26,26 @@ use crate::error::ObfuseError;
 ///
 /// `ObfuseStrInline` is thread-safe. Multiple threads can call `as_str()` concurrently;
 /// decryption happens exactly once via `OnceLock`.
-pub struct ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
-    /// Inline decryption function
-    decrypt_fn: F,
+pub struct ObfuseStrInline {
+    /// Inline decryption function (boxed to erase the specific closure type)
+    decrypt_fn: Box<dyn Fn() -> String + Send + Sync>,
 
     /// Lazily initialized decrypted plaintext
     decrypted: OnceLock<String>,
 }
 
-impl<F> ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl ObfuseStrInline {
     /// Creates a new `ObfuseStrInline` from an inline decryption function.
     ///
     /// This is called by the `obfuse!` macro and should not be used directly.
     #[doc(hidden)]
     #[must_use]
-    pub const fn new(decrypt_fn: F) -> Self {
+    pub fn new<F>(decrypt_fn: F) -> Self
+    where
+        F: Fn() -> String + Send + Sync + 'static,
+    {
         Self {
-            decrypt_fn,
+            decrypt_fn: Box::new(decrypt_fn),
             decrypted: OnceLock::new(),
         }
     }
@@ -123,10 +120,7 @@ where
     }
 }
 
-impl<F> Deref for ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl Deref for ObfuseStrInline {
     type Target = str;
 
     #[inline]
@@ -135,30 +129,21 @@ where
     }
 }
 
-impl<F> AsRef<str> for ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl AsRef<str> for ObfuseStrInline {
     #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-impl<F> AsRef<[u8]> for ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl AsRef<[u8]> for ObfuseStrInline {
     #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
 }
 
-impl<F> fmt::Debug for ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl fmt::Debug for ObfuseStrInline {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ObfuseStrInline")
             .field("value", &"[REDACTED]")
@@ -167,10 +152,7 @@ where
     }
 }
 
-impl<F> fmt::Display for ObfuseStrInline<F>
-where
-    F: Fn() -> String + Send + Sync,
-{
+impl fmt::Display for ObfuseStrInline {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
