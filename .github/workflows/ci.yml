@@ -52,6 +52,9 @@ jobs:
       - name: Test (polymorphic)
         run: cargo test --package obfuse --features polymorphic
 
+      - name: Test (control-flow-flatten)
+        run: cargo test --package obfuse --features control-flow-flatten
+
       - name: Verify polymorphic binary (Linux only)
         if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
         run: |
@@ -72,6 +75,21 @@ jobs:
 
       - name: Verify MBA obfuscation is not optimized away
         run: ./scripts/verify_mba_obfuscation.sh
+
+  cff-obfuscation:
+    name: Verify CFF Obfuscation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install binutils (objdump)
+        run: sudo apt-get update && sudo apt-get install -y binutils
+
+      - name: Verify CFF obfuscation is not optimized away
+        run: ./scripts/verify_cff_obfuscation.sh
 
   clippy:
     name: Clippy
