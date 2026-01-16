@@ -22,7 +22,7 @@ The `obfuse!` macro generates unique inline decryption code for each string at c
 
 ```toml
 [dependencies]
-obfuse = "0.1"
+obfuse = "1.0"
 ```
 
 ```rust
@@ -78,7 +78,7 @@ The default configuration provides **maximum obfuscation** through combined encr
 
 ```toml
 [dependencies]
-obfuse = "0.1"  # Uses aes-256-gcm + polymorphic by default
+obfuse = "1.0"  # Uses aes-256-gcm + polymorphic by default
 ```
 
 **Returns:** `ObfuseStrInline` - each string has unique inline decryption code
@@ -106,7 +106,7 @@ For projects that prioritize smaller binary size:
 
 ```toml
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["aes-256-gcm"] }
+obfuse = { version = "1.0", default-features = false, features = ["aes-256-gcm"] }
 ```
 
 **Returns:** `ObfuseStr` - traditional centralized decryption
@@ -120,13 +120,13 @@ obfuse = { version = "0.1", default-features = false, features = ["aes-256-gcm"]
 
 ```toml
 # AES-128-GCM with polymorphic (smaller key, still very secure)
-obfuse = { version = "0.1", default-features = false, features = ["aes-128-gcm", "polymorphic"] }
+obfuse = { version = "1.0", default-features = false, features = ["aes-128-gcm", "polymorphic"] }
 
 # ChaCha20-Poly1305 with polymorphic (best for ARM/mobile)
-obfuse = { version = "0.1", default-features = false, features = ["chacha20-poly1305", "polymorphic"] }
+obfuse = { version = "1.0", default-features = false, features = ["chacha20-poly1305", "polymorphic"] }
 
 # XOR with MBA (fastest, suitable for obfuscation only)
-obfuse = { version = "0.1", default-features = false, features = ["xor"] }
+obfuse = { version = "1.0", default-features = false, features = ["xor"] }
 ```
 
 ## Recommendations by Use Case
@@ -175,7 +175,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-obfuse = "0.1"  # Default: aes-256-gcm + polymorphic (recommended)
+obfuse = "1.0"  # Default: aes-256-gcm + polymorphic (recommended)
 ```
 
 This gives you **maximum security** with:
@@ -192,19 +192,19 @@ If you need different configurations:
 ```toml
 # Traditional mode (smaller binary, less secure)
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["aes-256-gcm"] }
+obfuse = { version = "1.0", default-features = false, features = ["aes-256-gcm"] }
 
 # AES-128 with polymorphic (good balance)
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["aes-128-gcm", "polymorphic"] }
+obfuse = { version = "1.0", default-features = false, features = ["aes-128-gcm", "polymorphic"] }
 
 # ChaCha20 with polymorphic (best for ARM/mobile)
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["chacha20-poly1305", "polymorphic"] }
+obfuse = { version = "1.0", default-features = false, features = ["chacha20-poly1305", "polymorphic"] }
 
 # XOR only (fastest, obfuscation only)
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["xor"] }
+obfuse = { version = "1.0", default-features = false, features = ["xor"] }
 ```
 
 ### Understanding Polymorphic Mode (Enabled by Default)
@@ -226,7 +226,7 @@ Polymorphic mode is **now enabled by default** because it provides significantly
 **To disable polymorphic and use traditional mode only:**
 ```toml
 [dependencies]
-obfuse = { version = "0.1", default-features = false, features = ["aes-256-gcm"] }
+obfuse = { version = "1.0", default-features = false, features = ["aes-256-gcm"] }
 ```
 
 ## Usage
