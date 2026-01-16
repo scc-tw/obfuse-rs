@@ -3,7 +3,7 @@ members = ["obfuse", "obfuse-core", "obfuse-macros"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.7"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
@@ -30,8 +30,8 @@ proc-macro2 = "1.0"
 
 # Internal (version required for crates.io publishing)
 # default-features = false ensures feature flags propagate correctly from obfuse crate
-obfuse-core = { version = "0.1.7", path = "obfuse-core", default-features = false }
-obfuse-macros = { version = "0.1.7", path = "obfuse-macros", default-features = false }
+obfuse-core = { version = "1.0.0", path = "obfuse-core", default-features = false }
+obfuse-macros = { version = "1.0.0", path = "obfuse-macros", default-features = false }
 
 # Hardened profile for hello example (IDA demo)
 [profile.release-hello]
