@@ -4,6 +4,20 @@ Compile-time string encryption for Rust with runtime decryption and secure memor
 
 **🔒 Now with polymorphic decryption by default** - Each string gets unique inline decryption code combining AES-256-GCM with random transformations for maximum anti-reversing protection.
 
+## Demo
+
+### Control Flow Obfuscation in IDA Pro
+
+Obfuscated binaries produce complex control flow graphs that resist static analysis:
+
+![IDA Pro Control Flow Graph](docs/images/ida.png)
+
+### Macro Expansion
+
+The `obfuse!` macro generates unique inline decryption code for each string at compile time:
+
+![Macro Expansion](docs/images/expand.gif)
+
 ## Quick Start
 
 ```toml

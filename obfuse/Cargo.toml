@@ -26,5 +26,8 @@ obfuse-core.workspace = true
 obfuse-macros.workspace = true
 
 [[example]]
+name = "hello"
+
+[[example]]
 name = "polymorphic"
 required-features = ["polymorphic"]

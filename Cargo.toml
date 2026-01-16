@@ -32,3 +32,16 @@ proc-macro2 = "1.0"
 # default-features = false ensures feature flags propagate correctly from obfuse crate
 obfuse-core = { version = "0.1.7", path = "obfuse-core", default-features = false }
 obfuse-macros = { version = "0.1.7", path = "obfuse-macros", default-features = false }
+
+# Hardened profile for hello example (IDA demo)
+[profile.release-hello]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+debug = false
+debug-assertions = false
+overflow-checks = false
+rpath = false
