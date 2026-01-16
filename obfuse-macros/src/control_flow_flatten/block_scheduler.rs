@@ -16,8 +16,8 @@ impl BlockScheduler {
 
 #[cfg(test)]
 mod tests {
-    use crate::control_flow_flatten::state_machine::{BlockType, StateId};
     use super::*;
+    use crate::control_flow_flatten::state_machine::{BlockType, StateId};
     use quote::quote;
     use rand::SeedableRng;
     use rand_chacha::ChaCha8Rng;

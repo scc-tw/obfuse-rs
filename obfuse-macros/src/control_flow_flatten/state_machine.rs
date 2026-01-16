@@ -1,9 +1,9 @@
+use super::CffConfig;
 use super::block_scheduler::BlockScheduler;
 use super::opaque_predicates::OpaquePredicate;
-use super::CffConfig;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use rand::{prelude::IndexedRandom, Rng};
+use rand::{Rng, prelude::IndexedRandom};
 use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
@@ -179,7 +179,8 @@ impl StateMachineBuilder {
             if let Some(block) = self.blocks.iter_mut().find(|b| b.id == current_id) {
                 block.real_next = Some(next_id);
 
-                if rng.random::<f32>() < self.config.predicate_density && !dead_block_ids.is_empty() {
+                if rng.random::<f32>() < self.config.predicate_density && !dead_block_ids.is_empty()
+                {
                     let fake_target = dead_block_ids.choose(rng).copied().unwrap_or(next_id);
                     block.fake_next = Some(fake_target);
                     block.predicate = Some(OpaquePredicate::random_true(rng));
@@ -197,7 +198,11 @@ impl StateMachineBuilder {
             let mut value =
                 generate_state_value(rng, self.config.min_state_bits, self.config.max_state_bits);
             while existing_values.contains(&value) {
-                value = generate_state_value(rng, self.config.min_state_bits, self.config.max_state_bits);
+                value = generate_state_value(
+                    rng,
+                    self.config.min_state_bits,
+                    self.config.max_state_bits,
+                );
                 retries += 1;
                 if retries > MAX_RETRIES {
                     return Err(syn::Error::new(
@@ -355,8 +360,12 @@ mod tests {
         builder.add_dead_block(&mut rng);
 
         builder.connect_with_predicates(&mut rng);
-        
-        assert_eq!(builder.blocks.len(), 4, "Should be exactly 4 blocks created");
+
+        assert_eq!(
+            builder.blocks.len(),
+            4,
+            "Should be exactly 4 blocks created"
+        );
 
         let code = builder.build(&[0x00], &mut rng);
         let code_str = code.to_string();
@@ -371,7 +380,7 @@ mod tests {
     #[test]
     fn test_cff_edge_cases() {
         let mut rng = ChaCha8Rng::seed_from_u64(999);
-        
+
         // Case 1: No fake blocks
         let mut config = CffConfig::default();
         config.fake_block_count = 0;

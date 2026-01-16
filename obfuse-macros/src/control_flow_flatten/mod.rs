@@ -1,9 +1,8 @@
-mod opaque_predicates;
 mod block_scheduler;
+mod opaque_predicates;
 mod state_machine;
 
 pub use state_machine::StateMachineBuilder;
-
 
 /// Configuration for control flow flattening
 #[derive(Debug, Clone, Copy)]
