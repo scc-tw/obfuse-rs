@@ -15,6 +15,9 @@ mod encrypt;
 #[cfg(feature = "polymorphic")]
 mod polymorphic;
 
+#[cfg(feature = "control-flow-flatten")]
+mod control_flow_flatten;
+
 #[cfg(not(feature = "polymorphic"))]
 use encrypt::{KEY_SIZE, NONCE_SIZE, encrypt};
 

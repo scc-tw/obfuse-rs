@@ -8,6 +8,9 @@ use quote::quote;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
+#[cfg(feature = "control-flow-flatten")]
+use crate::control_flow_flatten::{CffConfig, StateMachineBuilder};
+
 /// Types of transformation operations available for decryption
 #[derive(Debug, Clone, Copy)]
 enum Transform {
@@ -32,7 +35,7 @@ impl Transform {
 }
 
 /// A single layer of transformation in the decryption pipeline
-struct TransformLayer {
+pub(crate) struct TransformLayer {
     transform: Transform,
     /// Constants used for key derivation (to avoid static keys)
     key_constants: Vec<u8>,
@@ -149,34 +152,82 @@ impl PolymorphicGenerator {
         key
     }
 
-    /// Generate inline decryption code as token stream
+    /// Generate inline decryption code as token stream, dispatching to the correct implementation.
     fn generate_inline_decryption(
         &mut self,
         ciphertext: &[u8],
         layers: &[TransformLayer],
     ) -> TokenStream2 {
-        // Generate ciphertext array with explicit type annotation to help inference
+        #[cfg(feature = "control-flow-flatten")]
+        {
+            self.generate_flattened_decryption(ciphertext, layers)
+        }
+
+        #[cfg(not(feature = "control-flow-flatten"))]
+        {
+            self.generate_linear_decryption(ciphertext, layers)
+        }
+    }
+
+    /// Generates the original linear decryption code.
+    #[cfg(not(feature = "control-flow-flatten"))]
+    fn generate_linear_decryption(
+        &mut self,
+        ciphertext: &[u8],
+        layers: &[TransformLayer],
+    ) -> TokenStream2 {
         let ct_bytes = ciphertext.iter().map(|b| quote! { #b });
 
-        // Generate layer decryption code (apply in reverse order)
         let mut layer_code = Vec::new();
         for layer in layers.iter().rev() {
             let code = self.generate_layer_code(layer);
             layer_code.push(code);
         }
 
-        // Generate complete inline decryption wrapped in ObfuseStrInline
         quote! {
             ::obfuse::ObfuseStrInline::new(|| -> ::std::result::Result<::std::string::String, ::obfuse::ObfuseError> {
-                let mut data: ::std::vec::Vec<u8> = [#(#ct_bytes),*].to_vec();
-
+                let mut data: ::std::vec::Vec<u8> = vec![#(#ct_bytes),*];
                 #(#layer_code)*
-
-                // Convert to String
                 ::std::string::String::from_utf8(data)
                     .map_err(|e| ::obfuse::ObfuseError::InvalidUtf8(e.utf8_error()))
             })
         }
+    }
+
+    /// Generates flattened decryption code with a state machine.
+    #[cfg(feature = "control-flow-flatten")]
+    fn generate_flattened_decryption(
+        &mut self,
+        ciphertext: &[u8],
+        layers: &[TransformLayer],
+    ) -> TokenStream2 {
+        // CRITICAL: Pre-generate ALL layer code BEFORE creating the builder
+        // This avoids borrow checker conflict: we need `self` for generate_layer_code()
+        // but later we need `&mut self.rng` for the builder methods.
+        let layer_codes: Vec<(usize, TokenStream2)> = layers
+            .iter()
+            .enumerate()
+            .rev() // Reverse order for decryption
+            .map(|(i, layer)| (i, self.generate_layer_code(layer)))
+            .collect();
+
+        let config = CffConfig::default();
+        let mut builder = StateMachineBuilder::new(config);
+
+        builder.add_init_block();
+
+        for (layer_idx, layer_code) in layer_codes {
+            builder.add_layer_block(layer_idx, layer_code);
+        }
+
+        builder.add_finalize_block();
+
+        for _ in 0..config.fake_block_count {
+            builder.add_dead_block(&mut self.rng);
+        }
+
+        builder.connect_with_predicates(&mut self.rng);
+        builder.build(ciphertext, &mut self.rng)
     }
 
     /// Generate code for a single layer's decryption
