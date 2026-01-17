@@ -10,13 +10,13 @@ Compile-time string encryption for Rust with runtime decryption and secure memor
 
 Obfuscated binaries produce complex control flow graphs that resist static analysis:
 
-![IDA Pro Control Flow Graph](docs/images/ida.png)
+![IDA Pro Control Flow Graph](https://raw.githubusercontent.com/scc-tw/obfuse-rs/master/docs/images/ida.png)
 
 ### Macro Expansion
 
 The `obfuse!` macro generates unique inline decryption code for each string at compile time:
 
-![Macro Expansion](docs/images/expand.gif)
+![Macro Expansion](https://raw.githubusercontent.com/scc-tw/obfuse-rs/master/docs/images/expand.gif)
 
 ## Quick Start
 
@@ -30,11 +30,11 @@ use obfuse::obfuse;
 
 fn main() {
     // String encrypted at compile time with AES-256-GCM + unique polymorphic layers
-    let api_key = obfuse!("sk_live_abc123_secret");
-    
+    let license = obfuse!("Licensed to ACME Corp - Internal Use Only");
+
     // Decrypted only when accessed
-    println!("API Key: {}", api_key.as_str());
-    
+    println!("{}", license.as_str());
+
     // Memory securely wiped on drop
 }
 ```
@@ -42,19 +42,21 @@ fn main() {
 > **Security Notice**: This library provides **string obfuscation**, not military-grade encryption. The encryption key is embedded in the binary alongside the ciphertext. A determined attacker with access to your binary can extract both.
 >
 > **Appropriate uses:**
-> - Preventing casual inspection of binaries (`strings` command, hex editors)
-> - Stopping automated string extraction tools
-> - Basic protection against unsophisticated reverse engineering
+> - Hiding license/copyright strings from casual inspection
+> - Obfuscating internal configuration or feature flags
+> - Making reverse engineering more time-consuming
+> - Protecting proprietary algorithms or logic identifiers
 >
 > **NOT appropriate for:**
-> - Protecting highly sensitive secrets (use proper secrets management)
+> - Storing API keys, passwords, or credentials (use proper secrets management)
 > - Compliance requirements (PCI-DSS, HIPAA, SOC2, etc.)
-> - Scenarios where key extraction would be catastrophic
+> - Any data where extraction would be catastrophic
 
 ## Features
 
 - **Compile-time encryption**: Strings are encrypted during compilation, never stored in plaintext in binaries
-- **Polymorphic decryption** (default, **recommended**): Each string gets unique inline decryption code with combined encryption
+- **Polymorphic decryption** (default): Each string gets unique inline decryption code with combined encryption
+- **Control flow flattening** (default): Decryption logic is transformed into state machines with opaque predicates and fake blocks, making static analysis extremely difficult
 - **Combined encryption layers** (polymorphic mode):
   - **Layer 1**: Strong AEAD encryption (AES-256-GCM by default)
   - **Layer 2**: Unique polymorphic transformations per string (XOR, ADD/SUB, bit rotations)
@@ -66,34 +68,35 @@ fn main() {
   - `xor` - Simple XOR with MBA obfuscation (fast, less secure)
 - **MBA (Mixed Boolean-Arithmetic) transformations**: XOR decryption uses mathematically equivalent but complex expressions to resist decompiler simplification (e.g., IDA's Hex-Rays)
 - **Proper error handling**: No panics unless you use `.as_str()` - use `try_as_str()` for Result-based error handling
-- **Secure memory handling**: Volatile zeroing of sensitive data on drop
+- **Secure memory handling**: Volatile zeroing of data on drop
 - **Zero-copy decryption**: Decrypt only when accessed
 - **No runtime dependencies**: Encryption happens at compile time
 
 ## Encryption Modes
 
-### Default Mode: Polymorphic + AES-256-GCM (Recommended)
+### Default Mode: AES-256-GCM + Polymorphic + Control Flow Flattening
 
-The default configuration provides **maximum obfuscation** through combined encryption:
+The default configuration provides **maximum obfuscation** through combined techniques:
 
 ```toml
 [dependencies]
-obfuse = "1.0"  # Uses aes-256-gcm + polymorphic by default
+obfuse = "1.0"  # Uses aes-256-gcm + polymorphic + control-flow-flatten by default
 ```
 
 **Returns:** `ObfuseStrInline` - each string has unique inline decryption code
 
-**Security layers:**
+**Obfuscation layers:**
 1. **AES-256-GCM encryption**: Industry-standard authenticated encryption
 2. **Polymorphic transformations**: 2-4 random layers per string (XOR, ADD/SUB, rotations)
-3. **Runtime key derivation**: Keys computed from constants, not stored statically
-4. **No central decrypt function**: Each string has unique inline decryption code
+3. **Control flow flattening**: Decryption converted to state machines with opaque predicates
+4. **Runtime key derivation**: Keys computed from constants, not stored statically
+5. **No central decrypt function**: Each string has unique inline decryption code
 
 **Benefits:**
-- ✅ Strongest anti-reversing protection
-- ✅ Defense in depth (two independent encryption layers)
+- ✅ Maximum anti-reversing protection
+- ✅ Defense in depth (multiple independent obfuscation layers)
 - ✅ Unique code per string prevents pattern analysis
-- ✅ Even if one layer is broken, the other provides protection
+- ✅ Control flow graphs become extremely complex (see IDA screenshot above)
 - ✅ Proper error propagation (no unwrap/expect in generated code)
 
 **Trade-offs:**
@@ -171,19 +174,21 @@ Decryption is lazy and cached - subsequent accesses are nearly free.
 
 ## Installation
 
+**Requires Rust 1.85+** (edition 2024)
+
 Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-obfuse = "1.0"  # Default: aes-256-gcm + polymorphic (recommended)
+obfuse = "1.0"  # Default: aes-256-gcm + polymorphic + control-flow-flatten
 ```
 
-This gives you **maximum security** with:
+This gives you **maximum obfuscation** with:
 - AES-256-GCM authenticated encryption
 - Unique polymorphic transformations per string
+- Control flow flattening (state machines + opaque predicates)
 - Runtime key derivation
 - No central decryption point
-- Proper error propagation
 
 ### Customizing Encryption Options
 
@@ -209,18 +214,17 @@ obfuse = { version = "1.0", default-features = false, features = ["xor"] }
 
 ### Understanding Polymorphic Mode (Enabled by Default)
 
-Polymorphic mode is **now enabled by default** because it provides significantly stronger anti-reversing protection with minimal overhead.
+Polymorphic mode generates **unique inline decryption code** for each string, eliminating central decryption functions that aid reverse engineering.
 
 **What it does:**
 1. **Layer 1**: Encrypts with AES-256-GCM (industry-standard AEAD)
 2. **Layer 2**: Adds 2-4 random transformation layers per string
 3. **Layer 3**: Derives keys at runtime from constants
 
-**Why it's better:**
+**Why it's effective:**
 - Each string has **unique decryption code** (not a shared function)
 - Reverse engineers must analyze **each string individually**
-- **Defense in depth**: Even if one layer is broken, the other protects
-- Combines strong encryption (AES) with unique transformations
+- **Defense in depth**: Multiple independent obfuscation layers
 - **No panics in generated code**: Errors propagate properly via `Result`
 
 **To disable polymorphic and use traditional mode only:**
@@ -228,6 +232,30 @@ Polymorphic mode is **now enabled by default** because it provides significantly
 [dependencies]
 obfuse = { version = "1.0", default-features = false, features = ["aes-256-gcm"] }
 ```
+
+### Understanding Control Flow Flattening (Enabled by Default)
+
+Control flow flattening transforms the decryption logic into **state machines** that are extremely difficult to analyze statically.
+
+**What it does:**
+1. Converts sequential decryption steps into a dispatcher loop
+2. Inserts **opaque predicates** (conditions that always evaluate one way but are hard to prove statically)
+3. Adds **fake blocks** that are never executed but appear valid
+4. Uses randomized state transitions
+
+**Why it's effective:**
+- IDA Pro and other disassemblers show **complex control flow graphs** (see demo above)
+- Decompilers produce **convoluted pseudo-code** instead of clean logic
+- Symbolic execution tools struggle with opaque predicates
+- Each string has different state machine structure
+
+**To disable control flow flattening:**
+```toml
+[dependencies]
+obfuse = { version = "1.0", default-features = false, features = ["aes-256-gcm", "polymorphic"] }
+```
+
+**Debug mode** (`cff-debug` feature): Prints state machine structure during compilation for debugging.
 
 ## Usage
 
@@ -238,12 +266,12 @@ use obfuse::obfuse;
 
 fn main() {
     // Returns ObfuseStrInline with unique inline decryption code
-    let secret = obfuse!("my secret API key");
+    let build_info = obfuse!("Build: 2024.1.0-internal");
 
     // Decrypted only when accessed (may panic on error)
-    println!("Secret: {}", secret.as_str());
+    println!("{}", build_info.as_str());
 
-    // Memory is securely wiped when `secret` goes out of scope
+    // Memory is securely wiped when `build_info` goes out of scope
 }
 ```
 
@@ -253,11 +281,11 @@ fn main() {
 use obfuse::{obfuse, ObfuseError};
 
 fn main() -> Result<(), ObfuseError> {
-    let secret = obfuse!("sensitive data");
+    let license = obfuse!("Pro Edition - Licensed to Example Inc");
 
     // Use try_as_str() for proper error handling - no panics!
-    match secret.try_as_str() {
-        Ok(s) => println!("Secret: {s}"),
+    match license.try_as_str() {
+        Ok(s) => println!("{s}"),
         Err(ObfuseError::InvalidUtf8(e)) => {
             eprintln!("Invalid UTF-8: {e}");
         }
@@ -275,9 +303,9 @@ Or with `?` operator:
 ```rust
 use obfuse::{obfuse, ObfuseError};
 
-fn get_secret() -> Result<String, ObfuseError> {
-    let secret = obfuse!("my secret");
-    Ok(secret.try_as_str()?.to_string())
+fn get_license() -> Result<String, ObfuseError> {
+    let license = obfuse!("Pro Edition");
+    Ok(license.try_as_str()?.to_string())
 }
 ```
 
@@ -288,12 +316,12 @@ use obfuse::{obfuse, ObfuseStr};
 
 fn main() {
     // Returns ObfuseStr when polymorphic is disabled
-    let secret: ObfuseStr = obfuse!("database password");
+    let endpoint: ObfuseStr = obfuse!("https://internal.example.com/api/v2");
 
     // Use the decrypted string
-    connect_to_database(secret.as_str());
+    connect_to_service(endpoint.as_str());
 
-    // `secret` is automatically zeroed on drop
+    // `endpoint` is automatically zeroed on drop
 }
 ```
 
@@ -304,13 +332,13 @@ use obfuse::obfuse;
 
 fn main() {
     // Type inference works for both modes
-    let secret = obfuse!("my secret");
-    
+    let version = obfuse!("v2.1.0-beta");
+
     // Explicit type if needed (default mode returns ObfuseStrInline)
-    let another: _ = obfuse!("another secret");
-    
-    println!("{}", secret.as_str());
-    println!("{}", another.as_str());
+    let copyright: _ = obfuse!("Copyright 2024 Example Corp");
+
+    println!("{}", version.as_str());
+    println!("{}", copyright.as_str());
 }
 ```
 
@@ -322,12 +350,12 @@ Both `ObfuseStrInline` and `ObfuseStr` decrypt lazily:
 use obfuse::obfuse;
 
 fn main() {
-    let secret = obfuse!("sensitive data");
+    let config = obfuse!("feature_flags=premium,analytics");
 
     // String remains encrypted until first access
-    if should_use_secret() {
+    if should_load_config() {
         // Decryption happens here
-        use_secret(secret.as_str());
+        parse_config(config.as_str());
     }
     // If condition is false, string is never decrypted
 }
@@ -391,8 +419,8 @@ This library supports two build modes for different use cases:
 
 ```rust
 // Random key generated each compile - different binary every build
-let secret = obfuse!("my secret");
-println!("{}", secret.as_str());  // Auto-decrypts
+let license = obfuse!("Licensed to ACME Corp");
+println!("{}", license.as_str());  // Auto-decrypts
 ```
 
 ```
@@ -410,8 +438,8 @@ Build 3: key = [0x9f, 0xe2, ...] (different random)
 
 ```rust
 // Same seed = same key = reproducible output
-let secret = obfuse!("my secret", seed = "test_seed_123");
-println!("{}", secret.as_str());  // Auto-decrypts (same as random mode)
+let license = obfuse!("Licensed to ACME Corp", seed = "test_seed_123");
+println!("{}", license.as_str());  // Auto-decrypts (same as random mode)
 ```
 
 ```
@@ -448,15 +476,15 @@ Build 3 (seed="prod"): key = [0xcc, 0xdd, ...] (different seed = different key)
         This is OBFUSCATION, not real encryption
 ```
 
-For real secret protection, use runtime secrets management (environment variables, Vault, AWS Secrets Manager).
+For actual secrets (API keys, passwords, credentials), use runtime secrets management (environment variables, Vault, AWS Secrets Manager).
 
 ## Security Considerations
 
 ### What This Protects Against
 
 - Static binary analysis (strings command, hex editors)
-- Simple memory dumps of unaccessed secrets
-- Accidental logging of encrypted values
+- Simple memory dumps of unaccessed strings
+- Casual reverse engineering attempts
 
 ### What This Does NOT Protect Against
 
@@ -593,20 +621,54 @@ impl std::error::Error for ObfuseError { /* ... */ }
 obfuse-rs/
 ├── Cargo.toml              # Workspace configuration
 ├── README.md
-├── obfuse/               # Main library crate (re-exports)
+├── LICENSE
+├── docs/
+│   └── images/             # Documentation images (IDA screenshots, etc.)
+├── scripts/                # Verification scripts
+│   ├── verify_cff_obfuscation.sh
+│   ├── verify_mba_obfuscation.sh
+│   └── verify_polymorphic.sh
+├── .github/
+│   └── workflows/
+│       ├── ci.yml          # CI pipeline
+│       └── publish.yml     # Crates.io publishing
+├── obfuse/                 # Main library crate (re-exports)
 │   ├── Cargo.toml
-│   └── src/lib.rs
-├── obfuse-macros/        # Procedural macro crate
+│   ├── src/
+│   │   └── lib.rs
+│   ├── examples/
+│   │   ├── basic.rs
+│   │   ├── deterministic.rs
+│   │   ├── error_handling.rs
+│   │   ├── hello.rs
+│   │   └── polymorphic.rs
+│   └── tests/
+│       ├── binary_verification.rs
+│       ├── cff_integration.rs
+│       ├── integration.rs
+│       └── polymorphic.rs
+├── obfuse-macros/          # Procedural macro crate
 │   ├── Cargo.toml
-│   └── src/lib.rs
-└── obfuse-core/          # Core encryption/decryption logic
+│   └── src/
+│       ├── lib.rs
+│       ├── encrypt.rs          # Encryption code generation
+│       ├── polymorphic.rs      # Polymorphic transformation generation
+│       └── control_flow_flatten/
+│           ├── mod.rs
+│           ├── block_scheduler.rs
+│           ├── state_machine.rs
+│           └── opaque_predicates.rs
+└── obfuse-core/            # Core encryption/decryption logic
     ├── Cargo.toml
     └── src/
         ├── lib.rs
-        ├── obfuse_str.rs    # ObfuseStr type implementation
-        ├── aes.rs          # AES encryption
-        ├── chacha.rs       # ChaCha20 encryption
-        └── xor.rs          # XOR encryption
+        ├── error.rs            # Error types (ObfuseError)
+        ├── obfuse_str.rs       # ObfuseStr type (traditional mode)
+        ├── obfuse_str_inline.rs # ObfuseStrInline type (polymorphic mode)
+        ├── mba.rs              # MBA transformations
+        ├── aes.rs              # AES-128/256-GCM encryption
+        ├── chacha.rs           # ChaCha20-Poly1305 encryption
+        └── xor.rs              # XOR encryption with MBA
 ```
 
 ## Building
