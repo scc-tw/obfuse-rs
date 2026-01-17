@@ -545,6 +545,9 @@ impl ObfuseStrInline {
 
     /// Pre-decrypt without returning the value.
     pub fn try_decrypt(&self) -> Result<(), ObfuseError>;
+
+    /// Manually zeros the decrypted plaintext memory.
+    pub fn zeroize(&mut self);
 }
 
 impl Deref for ObfuseStrInline {
@@ -552,8 +555,9 @@ impl Deref for ObfuseStrInline {
     fn deref(&self) -> &str; // Triggers decryption, panics on error
 }
 
-// Note: ObfuseStrInline does NOT implement Drop with zeroing
-// because it contains a Result-returning closure
+impl Drop for ObfuseStrInline {
+    fn drop(&mut self); // Zeros decrypted plaintext
+}
 ```
 
 ### `ObfuseStr` Type (Traditional Mode)

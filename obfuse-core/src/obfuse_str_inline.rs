@@ -7,6 +7,8 @@ use std::fmt;
 use std::ops::Deref;
 use std::sync::OnceLock;
 
+use zeroize::Zeroize;
+
 use crate::error::ObfuseError;
 
 /// An obfuscated string that decrypts lazily using inline decryption code.
@@ -26,6 +28,12 @@ use crate::error::ObfuseError;
 ///
 /// `ObfuseStrInline` is thread-safe. Multiple threads can call `as_str()` concurrently;
 /// decryption happens exactly once via `OnceLock`.
+///
+/// # Memory Safety
+///
+/// On drop, the decrypted plaintext is zeroed using volatile writes that cannot be
+/// optimized away. Note that the key material embedded in the closure cannot be zeroed
+/// as it's part of the generated code, not stored data.
 pub struct ObfuseStrInline {
     /// Inline decryption function (boxed to erase the specific closure type)
     decrypt_fn: Box<dyn Fn() -> Result<String, ObfuseError> + Send + Sync>,
@@ -126,6 +134,22 @@ impl ObfuseStrInline {
     pub fn try_decrypt(&self) -> Result<(), ObfuseError> {
         self.try_as_str().map(|_| ())
     }
+
+    /// Manually zeros the decrypted plaintext memory.
+    ///
+    /// This is also called automatically on drop, but can be used to
+    /// clear memory earlier if needed.
+    ///
+    /// # Note
+    ///
+    /// Only the decrypted plaintext is zeroed. The key material embedded
+    /// in the decryption closure cannot be zeroed as it's part of the
+    /// generated code.
+    pub fn zeroize(&mut self) {
+        if let Some(decrypted) = self.decrypted.get_mut() {
+            decrypted.zeroize();
+        }
+    }
 }
 
 impl Deref for ObfuseStrInline {
@@ -163,5 +187,11 @@ impl fmt::Debug for ObfuseStrInline {
 impl fmt::Display for ObfuseStrInline {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+impl Drop for ObfuseStrInline {
+    fn drop(&mut self) {
+        self.zeroize();
     }
 }
