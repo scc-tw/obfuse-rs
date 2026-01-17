@@ -167,7 +167,7 @@ checksum = "bcc35a38544a891a5f7c865aca548a982ccb3b8650a5b06d0fd33a10283c56fc"
 
 [[package]]
 name = "obfuse"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "obfuse-core",
  "obfuse-macros",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "obfuse-core"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "aes-gcm",
  "chacha20poly1305",
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "obfuse-macros"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "aes-gcm",
  "chacha20poly1305",
